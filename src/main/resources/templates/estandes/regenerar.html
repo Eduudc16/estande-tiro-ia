@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Regenerar cenário')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('estandes')}"></header>
+
+<main class="conteudo estreito">
+    <nav class="trilha" aria-label="Trilha">
+        <a th:href="@{/estandes}">Estandes</a> /
+        <a th:href="@{/estandes/{id}(id=${estande.id})}" th:text="${estande.nome}">Nome</a> / <span>Regenerar</span>
+    </nav>
+    <h1>Regenerar cenário?</h1>
+
+    <div class="confirmacao">
+        <figure>
+            <img th:src="@{${estande.caminhoImagem}}" alt="Cenário atual">
+            <figcaption class="sub">Cenário atual (será substituído)</figcaption>
+        </figure>
+
+        <div class="alerta aviso">
+            <strong>Isto gera uma NOVA imagem com a chave faturada e substitui a atual.</strong>
+            <ul class="lista-info">
+                <li>Estande: <b th:text="${estande.nome}">Nome</b></li>
+                <li>Modelo: <code th:text="${statusIa.modeloImagem()}">modelo</code></li>
+                <li>Custo estimado: ~US$ <span th:text="${#numbers.formatDecimal(precoImagem, 1, 'POINT', 4, 'COMMA')}">0,0336</span></li>
+                <li>Gerações restantes nesta execução: <b th:text="${statusIa.restantes()}">5</b> de
+                    <span th:text="${statusIa.maxGeracoes()}">5</span></li>
+            </ul>
+        </div>
+
+        <form th:action="@{/estandes/{id}/regenerar(id=${estande.id})}" method="post"
+              data-aguarde="Regenerando cenário… (pode levar até 1 minuto)">
+            <input type="hidden" name="confirmacao" value="sim">
+            <div class="acoes">
+                <button class="btn perigo cheio" type="submit" th:disabled="${statusIa.restantes() == 0}">Sim, regenerar</button>
+                <a class="btn fantasma" th:href="@{/estandes/{id}(id=${estande.id})}">Cancelar</a>
+            </div>
+            <p class="dica" th:if="${statusIa.restantes() == 0}">O limite desta execução acabou (MAX_IMAGE_GENERATIONS no .env).</p>
+        </form>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+</body>
+</html>

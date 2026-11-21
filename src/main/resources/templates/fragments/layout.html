@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${titulo} + ' · Estande Sombrio'">Estande Sombrio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+
+<header th:fragment="menu(ativo)" class="topo">
+    <a class="marca" th:href="@{/estandes}">
+        <span class="marca-icone" aria-hidden="true"></span>
+        <span>ESTANDE SOMBRIO<small>Cenários de estande de tiro com IA</small></span>
+    </a>
+    <nav class="menu" aria-label="Principal">
+        <a th:href="@{/estandes}" th:classappend="${ativo == 'estandes'} ? 'ativo'">Estandes</a>
+        <a th:href="@{/estandes/novo}" th:classappend="${ativo == 'novo'} ? 'ativo'">Novo estande</a>
+        <a th:href="@{/logs}" th:classappend="${ativo == 'logs'} ? 'ativo'">Log de imagens</a>
+    </nav>
+    <div class="status-ia" th:if="${statusIa != null}">
+        <span class="chip-ia" th:classappend="${statusIa.textoConfigurado()} ? 'ok' : 'falta'"
+              th:title="${statusIa.textoConfigurado()} ? 'Texto: Spring AI ChatClient com a chave gratuita (GEMINI_API_KEY_TEXT)' : 'GEMINI_API_KEY_TEXT não configurada no .env'">
+            <i aria-hidden="true"></i>Texto <b th:text="${statusIa.modeloTexto()}">modelo</b>
+        </span>
+        <span class="chip-ia" th:classappend="${statusIa.imagemConfigurada()} ? 'ok' : 'falta'"
+              th:title="${statusIa.imagemConfigurada()} ? 'Imagem: ' + ${statusIa.modeloImagem()} + ' com a chave faturada (GEMINI_API_KEY_IMAGE) — gerações nesta execução' : 'GEMINI_API_KEY_IMAGE não configurada no .env'">
+            <i aria-hidden="true"></i>Imagens <b th:text="${statusIa.geracoesUsadas()} + '/' + ${statusIa.maxGeracoes()}">0/5</b>
+        </span>
+    </div>
+</header>
+
+<div th:fragment="alertas" class="alertas">
+    <div class="alerta sucesso" th:if="${sucesso}" th:text="${sucesso}" role="status">ok</div>
+    <div class="alerta aviso" th:if="${aviso}" th:text="${aviso}" role="status">aviso</div>
+    <div class="alerta erro" th:if="${erro}" role="alert">
+        <strong th:text="${erro}">erro</strong>
+        <small th:if="${erroDetalhe}" th:text="'Detalhe técnico: ' + ${erroDetalhe}">detalhe</small>
+    </div>
+</div>
+
+<footer th:fragment="rodape" class="rodape">
+    Atividade GenAI · Spring Boot 3 + Spring AI + Google Gemini · as chaves de API ficam só no arquivo <code>.env</code>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Estandes')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('estandes')}"></header>
+
+<main class="conteudo">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="cabecalho">
+        <div>
+            <h1>Estandes de tiro</h1>
+            <p class="sub">Cada estande tem um cenário fixo de fundo; os alvos aparecem e somem por cima dele.</p>
+        </div>
+        <a class="btn primario" th:href="@{/estandes/novo}">+ Novo estande</a>
+    </div>
+
+    <div class="grade-estandes" th:unless="${#lists.isEmpty(estandes)}">
+        <article class="card-estande" th:each="e : ${estandes}">
+            <a class="miniatura" th:href="@{/estandes/{id}(id=${e.id})}" th:aria-label="'Abrir ' + ${e.nome}">
+                <img th:if="${e.temImagem()}" th:src="@{${e.caminhoImagem}}" th:alt="'Cenário do estande ' + ${e.nome}"
+                     loading="lazy">
+                <span th:unless="${e.temImagem()}" class="sem-cenario"><span>Sem cenário</span></span>
+            </a>
+            <div class="card-corpo">
+                <h2><a th:href="@{/estandes/{id}(id=${e.id})}" th:text="${e.nome}">Nome</a></h2>
+                <p class="sub" th:text="${e.tipo.rotulo} + ' · ' + ${e.estiloVisual.rotulo}">Tipo · Estilo</p>
+                <ul class="passos-mini" aria-label="Andamento">
+                    <li th:classappend="${e.temDescricao()} ? 'feito'">Descrição</li>
+                    <li th:classappend="${e.temPromptImagem()} ? 'feito'">Prompt</li>
+                    <li th:classappend="${e.temImagem()} ? 'feito'">Cenário</li>
+                </ul>
+            </div>
+            <div class="card-acoes">
+                <a class="btn pequeno" th:href="@{/estandes/{id}(id=${e.id})}">Abrir</a>
+                <a class="btn pequeno fantasma" th:href="@{/estandes/{id}/editar(id=${e.id})}">Editar</a>
+                <form class="inline" th:action="@{/estandes/{id}/excluir(id=${e.id})}" method="post"
+                      th:data-confirmar="'Excluir o estande “' + ${e.nome} + '”? A imagem dele também será apagada.'">
+                    <button class="btn pequeno perigo" type="submit">Excluir</button>
+                </form>
+            </div>
+        </article>
+    </div>
+
+    <p class="vazio" th:if="${#lists.isEmpty(estandes)}">
+        Nenhum estande cadastrado ainda. <a class="link" th:href="@{/estandes/novo}">Cadastre o primeiro</a>.
+    </p>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+</body>
+</html>

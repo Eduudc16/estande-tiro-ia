@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${estande == null} ? 'Novo estande' : 'Editar estande')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu(${estande == null} ? 'novo' : 'estandes')}"></header>
+
+<main class="conteudo estreito">
+    <nav class="trilha" aria-label="Trilha">
+        <a th:href="@{/estandes}">Estandes</a> /
+        <a th:if="${estande != null}" th:href="@{/estandes/{id}(id=${estande.id})}" th:text="${estande.nome}">Nome</a>
+        <span th:if="${estande != null}">/</span>
+        <span th:text="${estande == null} ? 'Novo' : 'Editar'">Novo</span>
+    </nav>
+    <h1 th:text="${estande == null} ? 'Novo estande' : 'Editar estande'">Novo estande</h1>
+
+    <form class="formulario" method="post" th:object="${form}" novalidate
+          th:action="${estande == null} ? @{/estandes} : @{/estandes/{id}(id=${estande.id})}">
+
+        <label>Nome do estande
+            <input type="text" th:field="*{nome}" maxlength="80" required placeholder="Ex.: Galpão da Vila">
+            <span class="erro-campo" th:errors="*{nome}"></span>
+        </label>
+
+        <div class="grupo">
+            <label>Tipo (ambientação)
+                <select th:field="*{tipo}" required>
+                    <option value="">Escolha…</option>
+                    <option th:each="t : ${tipos}" th:value="${t}" th:text="${t.rotulo}">Tipo</option>
+                </select>
+                <span class="erro-campo" th:errors="*{tipo}"></span>
+            </label>
+            <label>Estilo visual
+                <select th:field="*{estiloVisual}" required>
+                    <option th:each="s : ${estilos}" th:value="${s}" th:text="${s.rotulo}">Estilo</option>
+                </select>
+                <span class="erro-campo" th:errors="*{estiloVisual}"></span>
+            </label>
+        </div>
+
+        <details class="opcional"
+                 th:open="${form.descricaoGeradaPorIA != null or form.promptImagem != null or #fields.hasErrors('descricaoGeradaPorIA') or #fields.hasErrors('promptImagem')}">
+            <summary>Textos da IA <small>(opcional: normalmente são gerados na tela do estande)</small></summary>
+            <label>Descrição
+                <textarea th:field="*{descricaoGeradaPorIA}" rows="4" maxlength="2000"></textarea>
+                <span class="erro-campo" th:errors="*{descricaoGeradaPorIA}"></span>
+            </label>
+            <label>Prompt de imagem
+                <textarea th:field="*{promptImagem}" rows="7" maxlength="4000"></textarea>
+                <small class="dica">Nomes de jogos ou de personagens são retirados automaticamente antes de gerar a imagem.</small>
+                <span class="erro-campo" th:errors="*{promptImagem}"></span>
+            </label>
+        </details>
+
+        <div class="acoes">
+            <button class="btn primario" type="submit">Salvar</button>
+            <a class="btn fantasma" th:href="${estande == null} ? @{/estandes} : @{/estandes/{id}(id=${estande.id})}">Cancelar</a>
+        </div>
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+</body>
+</html>

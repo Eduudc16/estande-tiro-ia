@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${estande.nome})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('estandes')}"></header>
+
+<main class="conteudo">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <nav class="trilha" aria-label="Trilha"><a th:href="@{/estandes}">Estandes</a> / <span th:text="${estande.nome}">Nome</span></nav>
+    <div class="cabecalho">
+        <div>
+            <h1 th:text="${estande.nome}">Nome</h1>
+            <p class="meta">
+                <span class="etiqueta" th:text="${estande.tipo.rotulo}">Tipo</span>
+                <span class="etiqueta" th:text="${estande.estiloVisual.rotulo}">Estilo</span>
+                <span class="sub" th:text="'Criado em ' + ${#temporals.format(estande.dataCriacao, 'dd/MM/yyyy HH:mm')}">Criado em</span>
+            </p>
+        </div>
+        <div class="acoes">
+            <a class="btn" th:href="@{/estandes/{id}/editar(id=${estande.id})}">Editar</a>
+            <form class="inline" th:action="@{/estandes/{id}/excluir(id=${estande.id})}" method="post"
+                  th:data-confirmar="'Excluir o estande “' + ${estande.nome} + '”? A imagem dele também será apagada.'">
+                <button class="btn perigo" type="submit">Excluir</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="detalhe-layout">
+        <section class="palco-wrap" aria-label="Cenário">
+            <div class="palco" data-palco>
+                <img th:if="${estande.temImagem()}" th:src="@{${estande.caminhoImagem}}" alt="Cenário de fundo gerado por IA">
+                <div th:unless="${estande.temImagem()}" class="sem-cenario grande">
+                    <span>Sem cenário ainda</span><small>Siga os 3 passos de “Gerar com IA”</small>
+                </div>
+                <div class="camada-alvos" data-alvos></div>
+                <div class="hud" data-hud hidden>
+                    <span class="hud-tempo" data-tempo>30.00</span>
+                    <span class="hud-pontos"><small>pontos</small> <b data-pontos>0</b></span>
+                </div>
+            </div>
+            <div class="palco-rodape">
+                <button class="btn pequeno" type="button" data-testar-alvos>▶ Testar alvos sobre o cenário</button>
+                <small class="sub">Prévia da parte dinâmica: alvos surgem na área central e somem. Clique para acertar.</small>
+            </div>
+            <p class="sub" th:if="${estande.temImagem()}">Arquivo: <code th:text="'assets' + ${#strings.substringAfter(estande.caminhoImagem, '/assets')}">assets/cenarios/1.png</code></p>
+        </section>
+
+        <aside class="passos" aria-label="Gerar com IA">
+            <h2>Gerar com IA</h2>
+            <div class="alerta aviso compacto" th:if="${gerandoAgora}">Uma geração de imagem deste estande está em andamento.</div>
+            <ol>
+                <li class="passo" th:classappend="${estande.temDescricao()} ? 'feito'">
+                    <div class="passo-cab">
+                        <span class="passo-num">1</span>
+                        <div><strong>Descrição</strong><small>texto · chave gratuita</small></div>
+                    </div>
+                    <form th:action="@{/estandes/{id}/descricao(id=${estande.id})}" method="post"
+                          data-aguarde="Gerando descrição…">
+                        <button type="submit" class="btn" th:classappend="${!estande.temDescricao()} ? 'primario'"
+                                th:text="${estande.temDescricao()} ? 'Gerar descrição de novo' : 'Gerar descrição com IA'">
+                            Gerar descrição com IA
+                        </button>
+                    </form>
+                </li>
+                <li class="passo" th:classappend="${estande.temPromptImagem()} ? 'feito'">
+                    <div class="passo-cab">
+                        <span class="passo-num">2</span>
+                        <div><strong>Prompt de imagem</strong><small>texto · chave gratuita</small></div>
+                    </div>
+                    <form th:action="@{/estandes/{id}/prompt(id=${estande.id})}" method="post"
+                          data-aguarde="Gerando prompt…">
+                        <button type="submit" class="btn"
+                                th:classappend="${estande.temDescricao() and !estande.temPromptImagem()} ? 'primario'"
+                                th:disabled="${!estande.temDescricao()}"
+                                th:text="${estande.temPromptImagem()} ? 'Gerar prompt de novo' : 'Gerar prompt de imagem com IA'">
+                            Gerar prompt de imagem com IA
+                        </button>
+                    </form>
+                    <small class="dica" th:unless="${estande.temDescricao()}">Gere a descrição primeiro.</small>
+                </li>
+                <li class="passo" th:classappend="${estande.temImagem()} ? 'feito'">
+                    <div class="passo-cab">
+                        <span class="passo-num">3</span>
+                        <div><strong>Cenário (imagem)</strong><small>chave faturada · <span th:text="${statusIa.modeloImagem()}">modelo</span></small></div>
+                    </div>
+                    <form th:unless="${estande.temImagem()}" th:action="@{/estandes/{id}/cenario(id=${estande.id})}"
+                          method="post" data-aguarde="Gerando cenário… (pode levar até 1 minuto)">
+                        <button type="submit" class="btn"
+                                th:classappend="${estande.temPromptImagem()} ? 'primario'"
+                                th:disabled="${!estande.temPromptImagem() or statusIa.restantes() == 0}">
+                            Gerar cenário com IA
+                        </button>
+                    </form>
+                    <a th:if="${estande.temImagem()}" class="btn" th:href="@{/estandes/{id}/regenerar(id=${estande.id})}">Regenerar…</a>
+                    <small class="dica" th:if="${!estande.temImagem() and !estande.temPromptImagem()}">Gere o prompt de imagem primeiro.</small>
+                    <small class="dica" th:if="${estande.temImagem()}">Já existe imagem: ela fica em cache e só é refeita pelo “Regenerar” (pede confirmação).</small>
+                    <p class="custo">
+                        ~US$ <span th:text="${#numbers.formatDecimal(precoImagem, 1, 'POINT', 4, 'COMMA')}">0,0336</span> por imagem ·
+                        restam <b th:text="${statusIa.restantes()}">5</b> de <span th:text="${statusIa.maxGeracoes()}">5</span> nesta execução
+                    </p>
+                </li>
+            </ol>
+        </aside>
+    </div>
+
+    <div class="textos-ia">
+        <section class="bloco">
+            <h2>Descrição <small>gerada por IA</small></h2>
+            <p th:if="${estande.temDescricao()}" th:text="${estande.descricaoGeradaPorIA}">Descrição</p>
+            <p th:unless="${estande.temDescricao()}" class="vazio">Ainda não gerada.</p>
+        </section>
+        <section class="bloco">
+            <h2>Prompt de imagem <small>o que vai para o modelo de imagem</small></h2>
+            <p th:if="${estande.temPromptImagem()}" class="prompt" th:text="${estande.promptImagem}">Prompt</p>
+            <p th:unless="${estande.temPromptImagem()}" class="vazio">Ainda não gerado.</p>
+        </section>
+    </div>
+
+    <section>
+        <div class="cabecalho baixo">
+            <h2>Gerações de imagem deste estande</h2>
+            <a class="link" th:href="@{/logs}">Ver log completo →</a>
+        </div>
+        <div class="tabela-wrap" th:unless="${#lists.isEmpty(logs)}">
+            <table class="tabela">
+                <thead><tr><th>Data/hora</th><th>Modelo</th><th>Resultado</th><th>Mensagem de erro</th></tr></thead>
+                <tbody>
+                <tr th:each="l : ${logs}">
+                    <td class="nowrap" th:text="${#temporals.format(l.dataHora, 'dd/MM/yyyy HH:mm:ss')}">data</td>
+                    <td><code th:text="${l.modeloUsado}">modelo</code></td>
+                    <td><span class="selo" th:classappend="${l.sucesso} ? 'ok' : 'falha'" th:text="${l.sucesso} ? 'Sucesso' : 'Erro'">Sucesso</span></td>
+                    <td class="msg" th:text="${l.mensagemErro} ?: '—'">—</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="vazio" th:if="${#lists.isEmpty(logs)}">Nenhuma chamada à API de imagem para este estande.</p>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+</body>
+</html>

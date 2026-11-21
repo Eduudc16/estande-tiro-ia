@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Log de imagens')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('logs')}"></header>
+
+<main class="conteudo">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="cabecalho">
+        <div>
+            <h1>Log de gerações de imagem</h1>
+            <p class="sub">Toda chamada feita à API de imagem (chave faturada) fica registrada aqui, com sucesso ou erro.</p>
+        </div>
+    </div>
+
+    <section class="cards">
+        <div class="card"><strong th:text="${resumo.tentativas()}">0</strong><span>Chamadas à API de imagem</span></div>
+        <div class="card"><strong th:text="${resumo.sucessos()}">0</strong><span>Imagens geradas</span></div>
+        <div class="card"><strong th:text="${resumo.falhas()}">0</strong><span>Falhas</span></div>
+        <div class="card">
+            <strong th:text="'US$ ' + ${#numbers.formatDecimal(resumo.gastoEstimadoUsd(), 1, 'POINT', 4, 'COMMA')}">US$ 0,0000</strong>
+            <span th:text="'Gasto estimado (imagens × US$ ' + ${#numbers.formatDecimal(resumo.precoPorImagemUsd(), 1, 'POINT', 4, 'COMMA')} + ')'">Gasto estimado</span>
+        </div>
+        <div class="card">
+            <strong th:text="${statusIa.geracoesUsadas()} + '/' + ${statusIa.maxGeracoes()}">0/5</strong>
+            <span>Gerações nesta execução (MAX_IMAGE_GENERATIONS)</span>
+        </div>
+    </section>
+
+    <div class="tabela-wrap" th:unless="${#lists.isEmpty(logs)}">
+        <table class="tabela">
+            <thead>
+            <tr><th class="num">#</th><th>Data/hora</th><th>Estande</th><th>Modelo usado</th><th>Resultado</th><th>Mensagem de erro</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="l : ${logs}">
+                <td class="num" th:text="${l.id}">1</td>
+                <td class="nowrap" th:text="${#temporals.format(l.dataHora, 'dd/MM/yyyy HH:mm:ss')}">data</td>
+                <td>
+                    <a th:if="${l.estandeTiro != null}" class="link" th:href="@{/estandes/{id}(id=${l.estandeTiro.id})}"
+                       th:text="${l.estandeTiro.nome}">Estande</a>
+                    <span th:if="${l.estandeTiro == null}" class="sub">(estande excluído)</span>
+                </td>
+                <td><code th:text="${l.modeloUsado}">modelo</code></td>
+                <td><span class="selo" th:classappend="${l.sucesso} ? 'ok' : 'falha'" th:text="${l.sucesso} ? 'Sucesso' : 'Erro'">Sucesso</span></td>
+                <td class="msg" th:text="${l.mensagemErro} ?: '—'">—</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="vazio" th:if="${#lists.isEmpty(logs)}">Nenhuma chamada à API de imagem ainda.</p>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+</body>
+</html>

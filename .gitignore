@@ -1,0 +1,22 @@
+# --- Segredos: as chaves das APIs ficam SO no .env (nunca versionar) ---
+.env
+.env.*
+!.env.example
+
+# --- Banco H2 em arquivo ---
+*.db
+data/
+
+# --- Build ---
+target/
+
+# --- IDEs / sistema ---
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.DS_Store
+*.log
+.claude/
