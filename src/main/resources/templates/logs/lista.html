@@ -31,16 +31,23 @@
     <div class="tabela-wrap" th:unless="${#lists.isEmpty(logs)}">
         <table class="tabela">
             <thead>
-            <tr><th class="num">#</th><th>Data/hora</th><th>Estande</th><th>Modelo usado</th><th>Resultado</th><th>Mensagem de erro</th></tr>
+            <tr><th class="num">#</th><th>Data/hora</th><th>Imagem de</th><th>Modelo usado</th><th>Resultado</th><th>Mensagem de erro</th></tr>
             </thead>
             <tbody>
             <tr th:each="l : ${logs}">
                 <td class="num" th:text="${l.id}">1</td>
                 <td class="nowrap" th:text="${#temporals.format(l.dataHora, 'dd/MM/yyyy HH:mm:ss')}">data</td>
                 <td>
-                    <a th:if="${l.estandeTiro != null}" class="link" th:href="@{/estandes/{id}(id=${l.estandeTiro.id})}"
-                       th:text="${l.estandeTiro.nome}">Estande</a>
-                    <span th:if="${l.estandeTiro == null}" class="sub">(estande excluído)</span>
+                    <th:block th:if="${l.estandeTiro != null}">
+                        <span class="sub">Cenário ·</span>
+                        <a class="link" th:href="@{/estandes/{id}(id=${l.estandeTiro.id})}" th:text="${l.estandeTiro.nome}">Estande</a>
+                    </th:block>
+                    <th:block th:if="${l.estandeTiro == null and l.alvoInimigo != null}">
+                        <span class="sub">Alvo ·</span>
+                        <a class="link" th:href="@{/alvos} + '#tipo-' + ${l.alvoInimigo.tipoEstande.cssTema}"
+                           th:text="${l.alvoInimigo.nome}">Alvo</a>
+                    </th:block>
+                    <span th:if="${l.estandeTiro == null and l.alvoInimigo == null}" class="sub">(estande excluído)</span>
                 </td>
                 <td><code th:text="${l.modeloUsado}">modelo</code></td>
                 <td><span class="selo" th:classappend="${l.sucesso} ? 'ok' : 'falha'" th:text="${l.sucesso} ? 'Sucesso' : 'Erro'">Sucesso</span></td>

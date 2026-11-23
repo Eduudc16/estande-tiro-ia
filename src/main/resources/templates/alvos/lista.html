@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Alvos')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('alvos')}"></header>
+
+<main class="conteudo">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="cabecalho">
+        <div>
+            <h1>Alvos do minigame</h1>
+            <p class="sub">Os inimigos de cada tipo de estande. Enquanto não têm imagem, o jogo usa o desenho; depois de
+                gerada pela IA, usa a imagem recortada (fundo removido e contorno de papelão).</p>
+        </div>
+    </div>
+    <div class="alerta aviso compacto">
+        <span>Cada imagem usa a chave faturada (~US$ <span th:text="${#numbers.formatDecimal(precoImagem, 1, 'POINT', 4, 'COMMA')}">0,0336</span>)
+        e conta no limite desta execução: restam <b th:text="${statusIa.restantes()}">5</b> de
+        <span th:text="${statusIa.maxGeracoes()}">5</span>. A imagem original fica guardada, então refazer o recorte é grátis.</span>
+    </div>
+
+    <section class="grupo-alvos" th:each="g : ${grupos}" th:id="'tipo-' + ${g.key.cssTema}"
+             th:classappend="'tema-' + ${g.key.cssTema}">
+        <h2><span th:text="${g.key.rotulo}">Vila rural</span> <small th:text="${g.key.inimigos}">Aldeões hostis</small></h2>
+        <div class="grade-alvos">
+            <article class="cartao-alvo" th:each="a : ${g.value}">
+                <div class="alvo-previa">
+                    <img th:if="${a.temImagem()}" th:src="@{${a.caminhoImagem}}" th:alt="${a.nome}">
+                    <div th:unless="${a.temImagem()}" class="alvo-desenho"
+                         th:data-desenho-tipo="${a.tipoEstande.name()}" th:data-desenho-indice="${a.indiceDesenho}"></div>
+                    <span class="selo-origem" th:classappend="${a.temImagem()} ? 'ia'"
+                          th:text="${a.temImagem()} ? 'Imagem da IA' : 'Desenho'">Desenho</span>
+                </div>
+                <div class="cartao-alvo-corpo">
+                    <h3 th:text="${a.nome}">Aldeão com forcado</h3>
+                    <p class="sub" th:text="${a.classe.rotulo} + ' · ' + ${a.classe.resumo}">Comum</p>
+                    <p class="descricao-visual" th:text="${a.descricaoVisual}">descrição</p>
+                </div>
+                <div class="acoes">
+                    <form th:unless="${a.temImagem()}" th:action="@{/alvos/{id}/gerar(id=${a.id})}" method="post"
+                          data-aguarde="Gerando alvo… (até 1 minuto)">
+                        <button class="btn primario pequeno" type="submit" th:disabled="${statusIa.restantes() == 0}">
+                            Gerar imagem com IA
+                        </button>
+                    </form>
+                    <a th:if="${a.temImagem()}" class="btn pequeno" th:href="@{/alvos/{id}/regenerar(id=${a.id})}">Regenerar…</a>
+                    <form th:if="${a.temImagem()}" th:action="@{/alvos/{id}/recortar(id=${a.id})}" method="post"
+                          data-aguarde="Recortando…">
+                        <button class="btn pequeno fantasma" type="submit" title="Refaz o recorte com a imagem já paga">Refazer recorte</button>
+                    </form>
+                </div>
+            </article>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+<script th:src="@{/js/alvos.js}"></script>
+<script>
+    // desenhos SVG dos alvos que ainda não têm imagem da IA
+    Alvos.garantirDefs();
+    document.querySelectorAll('[data-desenho-tipo]').forEach(function (el) {
+        var def = Alvos.inimigos(el.dataset.desenhoTipo)[Number(el.dataset.desenhoIndice)];
+        if (def) el.innerHTML = Alvos.svg(def);
+    });
+</script>
+</body>
+</html>

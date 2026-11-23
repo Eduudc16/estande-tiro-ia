@@ -39,7 +39,8 @@
             <div class="palco-rodape">
                 <a class="btn primario" th:href="@{/estandes/{id}/jogar(id=${estande.id})}">▶ Jogar neste estande</a>
                 <small class="sub">
-                    Inimigos: <b th:text="${estande.tipo.inimigos}">Aldeões</b> · a refém não pode ser atingida ·
+                    Inimigos: <a class="link" th:href="@{/alvos} + '#tipo-' + ${estande.tipo.cssTema}"
+                                 th:text="${estande.tipo.inimigos}">Aldeões</a> · a refém não pode ser atingida ·
                     <a class="link" th:href="@{/armas}">armas</a>
                 </small>
             </div>

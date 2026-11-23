@@ -28,6 +28,11 @@ public class LogGeracaoImagem {
     @JoinColumn(name = "estande_tiro_id")
     private EstandeTiro estandeTiro;
 
+    /** Preenchido quando a imagem gerada foi de um alvo (inimigo) e não do cenário de um estande. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "alvo_inimigo_id")
+    private AlvoInimigo alvoInimigo;
+
     @Column(name = "data_hora", nullable = false)
     private LocalDateTime dataHora;
 
@@ -52,6 +57,18 @@ public class LogGeracaoImagem {
         return novo(estande, modelo, false, msg.length() > 1000 ? msg.substring(0, 1000) : msg);
     }
 
+    public static LogGeracaoImagem sucessoAlvo(AlvoInimigo alvo, String modelo) {
+        LogGeracaoImagem log = novo(null, modelo, true, null);
+        log.alvoInimigo = alvo;
+        return log;
+    }
+
+    public static LogGeracaoImagem falhaAlvo(AlvoInimigo alvo, String modelo, String mensagemErro) {
+        LogGeracaoImagem log = falha(null, modelo, mensagemErro);
+        log.alvoInimigo = alvo;
+        return log;
+    }
+
     private static LogGeracaoImagem novo(EstandeTiro estande, String modelo, boolean sucesso, String erro) {
         LogGeracaoImagem log = new LogGeracaoImagem();
         log.estandeTiro = estande;
@@ -72,6 +89,14 @@ public class LogGeracaoImagem {
 
     public void setEstandeTiro(EstandeTiro estandeTiro) {
         this.estandeTiro = estandeTiro;
+    }
+
+    public AlvoInimigo getAlvoInimigo() {
+        return alvoInimigo;
+    }
+
+    public void setAlvoInimigo(AlvoInimigo alvoInimigo) {
+        this.alvoInimigo = alvoInimigo;
     }
 
     public LocalDateTime getDataHora() {

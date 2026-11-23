@@ -21,6 +21,7 @@
     <nav class="menu" aria-label="Principal">
         <a th:href="@{/estandes}" th:classappend="${ativo == 'estandes'} ? 'ativo'">Estandes</a>
         <a th:href="@{/estandes/novo}" th:classappend="${ativo == 'novo'} ? 'ativo'">Novo estande</a>
+        <a th:href="@{/alvos}" th:classappend="${ativo == 'alvos'} ? 'ativo'">Alvos</a>
         <a th:href="@{/armas}" th:classappend="${ativo == 'armas'} ? 'ativo'">Armas</a>
         <a th:href="@{/logs}" th:classappend="${ativo == 'logs'} ? 'ativo'">Log de imagens</a>
     </nav>

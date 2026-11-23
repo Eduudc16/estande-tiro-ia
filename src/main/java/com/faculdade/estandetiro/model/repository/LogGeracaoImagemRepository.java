@@ -10,8 +10,11 @@ import java.util.List;
 
 public interface LogGeracaoImagemRepository extends JpaRepository<LogGeracaoImagem, Long> {
 
-    @Query("select l from LogGeracaoImagem l left join fetch l.estandeTiro order by l.dataHora desc, l.id desc")
+    @Query("select l from LogGeracaoImagem l left join fetch l.estandeTiro left join fetch l.alvoInimigo "
+            + "order by l.dataHora desc, l.id desc")
     List<LogGeracaoImagem> listarComEstande();
+
+    long countByAlvoInimigoId(Long alvoInimigoId);
 
     List<LogGeracaoImagem> findTop5ByEstandeTiroIdOrderByDataHoraDescIdDesc(Long estandeId);
 

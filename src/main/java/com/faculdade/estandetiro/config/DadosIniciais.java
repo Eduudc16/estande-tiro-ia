@@ -1,25 +1,83 @@
 package com.faculdade.estandetiro.config;
 
+import com.faculdade.estandetiro.model.entity.AlvoInimigo;
 import com.faculdade.estandetiro.model.entity.Arma;
+import com.faculdade.estandetiro.model.entity.ClasseAlvo;
 import com.faculdade.estandetiro.model.entity.EstandeTiro;
 import com.faculdade.estandetiro.model.entity.EstiloVisual;
 import com.faculdade.estandetiro.model.entity.TipoArma;
 import com.faculdade.estandetiro.model.entity.TipoEstande;
+import com.faculdade.estandetiro.model.service.AlvoInimigoService;
 import com.faculdade.estandetiro.model.service.ArmaService;
 import com.faculdade.estandetiro.model.service.EstandeTiroService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-/** Cadastra dados de exemplo quando as tabelas estão vazias: 4 estandes (sem textos nem imagens) e 6 armas. */
+/**
+ * Cadastra dados de exemplo quando as tabelas estão vazias: 4 estandes (sem textos nem imagens), os inimigos de
+ * cada tipo de estande (sem imagens) e 6 armas.
+ */
 @Component
 public class DadosIniciais implements CommandLineRunner {
 
     private final EstandeTiroService estandeService;
     private final ArmaService armaService;
+    private final AlvoInimigoService alvoService;
 
-    public DadosIniciais(EstandeTiroService estandeService, ArmaService armaService) {
+    public DadosIniciais(EstandeTiroService estandeService, ArmaService armaService,
+                         AlvoInimigoService alvoService) {
         this.estandeService = estandeService;
         this.armaService = armaService;
+        this.alvoService = alvoService;
+    }
+
+    /**
+     * Inimigos de cada tipo, na mesma ordem dos desenhos de static/js/alvos.js (usados enquanto não houver imagem).
+     * As descrições são genéricas e originais: nenhuma cita jogo ou personagem.
+     */
+    private void criarAlvos() {
+        alvo(TipoEstande.VILA_RURAL, 0, "Aldeão com forcado", ClasseAlvo.COMUM,
+                "camponês hostil de uma vila europeia antiga, de boina escura, camisa de linho surrada e calça de "
+                        + "lona, segurando um forcado na diagonal à frente do corpo");
+        alvo(TipoEstande.VILA_RURAL, 1, "Aldeão com tocha", ClasseAlvo.COMUM,
+                "camponês hostil de uma vila europeia antiga, de colete marrom e boina, segurando uma tocha acesa "
+                        + "ao lado do corpo");
+        alvo(TipoEstande.VILA_RURAL, 2, "Aldeã com foice", ClasseAlvo.AGIL,
+                "camponesa hostil de uma vila europeia antiga, com lenço na cabeça, blusa surrada e saia longa "
+                        + "escura, segurando uma foice ao lado do corpo");
+        alvo(TipoEstande.VILA_RURAL, 3, "Lenhador com machado", ClasseAlvo.FORTE,
+                "lenhador hostil, alto, robusto e barbudo, de colete de couro e camisa encardida, segurando um "
+                        + "machado grande com as duas mãos à frente do corpo");
+        alvo(TipoEstande.CASTELO, 0, "Cultista com cajado", ClasseAlvo.COMUM,
+                "cultista encapuzado de manto roxo escuro, com o rosto na sombra do capuz, segurando um cajado de "
+                        + "madeira com uma pedra roxa na ponta");
+        alvo(TipoEstande.CASTELO, 1, "Cultista com foice", ClasseAlvo.AGIL,
+                "cultista encapuzado de manto vermelho escuro, com o rosto na sombra do capuz, segurando uma foice");
+        alvo(TipoEstande.CASTELO, 2, "Guardião mascarado", ClasseAlvo.FORTE,
+                "guardião de manto preto com máscara branca lisa, segurando um escudo de metal e um bastão");
+        alvo(TipoEstande.BASE_MILITAR, 0, "Soldado com cassetete", ClasseAlvo.COMUM,
+                "soldado de uniforme verde-oliva, capacete e máscara de gás, segurando um cassetete");
+        alvo(TipoEstande.BASE_MILITAR, 1, "Soldado com faca", ClasseAlvo.AGIL,
+                "soldado ágil de uniforme verde-oliva, capacete e máscara de gás, segurando uma faca de combate");
+        alvo(TipoEstande.BASE_MILITAR, 2, "Soldado pesado com escudo", ClasseAlvo.FORTE,
+                "soldado pesado de armadura cinza, capacete e máscara de gás, segurando um escudo antimotim e uma "
+                        + "marreta");
+        alvo(TipoEstande.MINA, 0, "Mineiro com picareta", ClasseAlvo.COMUM,
+                "mineiro possuído de capacete amarelo com lanterna e roupas sujas de carvão, segurando uma picareta");
+        alvo(TipoEstande.MINA, 1, "Mineiro com dinamite", ClasseAlvo.AGIL,
+                "mineiro possuído de capacete amarelo com lanterna, segurando uma banana de dinamite de pavio aceso");
+        alvo(TipoEstande.MINA, 2, "Brutamontes com marreta", ClasseAlvo.FORTE,
+                "minerador brutamontes, enorme e barbudo, de avental de couro, segurando uma marreta pesada");
+        alvo(TipoEstande.PORTO, 0, "Pirata com sabre", ClasseAlvo.COMUM,
+                "pirata sombrio de bandana vermelha e camisa listrada, segurando um sabre curvo");
+        alvo(TipoEstande.PORTO, 1, "Marujo com gancho", ClasseAlvo.AGIL,
+                "marujo sombrio de bandana azul e camisa listrada, com um gancho de metal no lugar de uma das mãos");
+        alvo(TipoEstande.PORTO, 2, "Capitão pirata", ClasseAlvo.FORTE,
+                "capitão pirata sombrio, alto e barbudo, de casaco longo escuro e chapéu tricórnio, segurando um sabre");
+    }
+
+    private void alvo(TipoEstande tipo, int indice, String nome, ClasseAlvo classe, String descricao) {
+        alvoService.criar(new AlvoInimigo(tipo, indice, nome, classe, descricao));
     }
 
     @Override
@@ -29,6 +87,9 @@ public class DadosIniciais implements CommandLineRunner {
             estandeService.criar(new EstandeTiro("Salão do Castelo", TipoEstande.CASTELO, EstiloVisual.REALISTA));
             estandeService.criar(new EstandeTiro("Hangar da Ilha", TipoEstande.BASE_MILITAR, EstiloVisual.CARTOON));
             estandeService.criar(new EstandeTiro("Poço da Mina", TipoEstande.MINA, EstiloVisual.PIXEL_ART));
+        }
+        if (alvoService.contar() == 0) {
+            criarAlvos();
         }
         if (armaService.contar() == 0) {
             armaService.criar(new Arma("Pistola 9mm", TipoArma.PISTOLA, 1, 12, 220, 1100,

@@ -36,7 +36,13 @@ public class ImageService {
         this.configurado = configurado;
     }
 
+    /** Gera na proporção padrão (16:9, a dos cenários). */
     public ImagemGerada gerar(String prompt) {
+        return gerar(prompt, proporcao);
+    }
+
+    /** Gera na proporção pedida (ex.: "2:3" para os alvos em pé). */
+    public ImagemGerada gerar(String prompt, String proporcaoDaImagem) {
         if (!configurado) {
             throw IaException.chaveNaoConfigurada(VARIAVEL_CHAVE);
         }
@@ -46,7 +52,7 @@ public class ImageService {
                         "parts", List.of(Map.of("text", prompt)))),
                 "generationConfig", Map.of(
                         "responseModalities", List.of("IMAGE"),
-                        "imageConfig", Map.of("aspectRatio", proporcao)));
+                        "imageConfig", Map.of("aspectRatio", proporcaoDaImagem)));
 
         JsonNode resposta;
         try {

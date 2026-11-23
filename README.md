@@ -67,7 +67,7 @@ mina), ainda sem textos nem imagens, e as 6 armas do minigame. Se a porta 8080 e
 `application.properties` faz o Spring Boot ler o `.env` como arquivo de propriedades, sem nenhuma dependência extra.
 Variáveis de ambiente do sistema, se existirem, têm prioridade sobre o `.env`.
 
-**Testes:** `.\mvnw.cmd test` roda 26 testes. Neles a IA é simulada (mocks), então eles não usam as chaves nem gastam
+**Testes:** `.\mvnw.cmd test` roda 33 testes. Neles a IA é simulada (mocks), então eles não usam as chaves nem gastam
 cota.
 
 ## As duas chaves de API
@@ -105,6 +105,16 @@ Na tela do estande, em **Gerar com IA**:
 3. **Gerar cenário com IA** (imagem, chave faturada). Gera a imagem de fundo em 16:9, salva em
    `assets/cenarios/<id>.png` (servida em `/assets/cenarios/<id>.png`) e guarda o caminho no banco.
    O botão **Regenerar…** só aparece quando o estande já tem imagem e sempre passa por uma tela de confirmação.
+4. **Gerar alvos com IA** (imagem, chave faturada), na tela **Alvos**. Gera cada inimigo do minigame como um
+   personagem original. O prompt pede fundo magenta liso e não cita jogo nem personagem. Depois
+   [`RecorteAlvo`](src/main/java/com/faculdade/estandetiro/model/service/ia/RecorteAlvo.java):
+   - tira o fundo (inclusive os pedaços presos entre braço e corpo);
+   - corta no personagem e reduz o tamanho;
+   - põe um contorno claro de papelão com borda escura.
+
+   O recorte vai para `assets/alvos/<id>.png` e o jogo passa a usar essa imagem no lugar do desenho. A imagem
+   original fica guardada em `data/alvos-originais` (fora do Git), então **"Refazer recorte" é grátis**: não chama a
+   API. Os 4 aldeões da vila já foram gerados assim.
 
 Base do prompt de imagem. Os trechos entre colchetes vêm do tipo e do estilo do estande, em
 [`TipoEstande`](src/main/java/com/faculdade/estandetiro/model/entity/TipoEstande.java):
@@ -164,8 +174,12 @@ arma define o comportamento, que está programado em `static/js/jogo.js`.
 - `R`: recarregar.
 - Botão direito ou `Shift`: zoom do rifle (no celular, use o botão 🔍 Mira).
 
-Os alvos são desenhos originais em SVG (`static/js/alvos.js`), no estilo de recortes de madeira pintados. Eles não usam
-imagens nem personagens de nenhum jogo.
+**Aparência dos alvos:**
+- Cada inimigo usa a **imagem gerada pela IA** quando ela existe (tela **Alvos**). Senão, usa o desenho original em
+  SVG (`static/js/alvos.js`), no estilo de recorte de madeira pintado.
+- Nas imagens, o acerto é conferido no pixel: tiro na parte transparente passa direto. A cabeça é achada
+  automaticamente no topo do recorte.
+- Nada usa imagens ou personagens de outros jogos.
 
 ## Controle de custo (chave faturada)
 
@@ -200,6 +214,7 @@ imagens nem personagens de nenhum jogo.
 | `/estandes/{id}/jogar` | Minigame do estande |
 | `/estandes/{id}/regenerar` | Confirmação do Regenerar |
 | `/armas`, `/armas/nova`, `/armas/{id}/editar` | Cadastro das armas do minigame |
+| `/alvos` e `/alvos/{id}/regenerar` | Inimigos de cada tipo: gerar com IA, regenerar (com confirmação) e refazer o recorte |
 | `/logs` | Log das gerações de imagem e gasto estimado |
 | `/h2-console` | Console do banco: JDBC URL `jdbc:h2:file:./data/estandes`, usuário `sa`, sem senha |
 
@@ -208,6 +223,17 @@ imagens nem personagens de nenhum jogo.
 ```mermaid
 erDiagram
     ESTANDE_TIRO ||--o{ LOG_GERACAO_IMAGEM : "gerações de imagem"
+    ALVO_INIMIGO ||--o{ LOG_GERACAO_IMAGEM : "gerações de imagem"
+    ALVO_INIMIGO {
+        BIGINT id PK
+        VARCHAR tipo_estande
+        VARCHAR nome
+        VARCHAR classe "COMUM, AGIL, FORTE"
+        VARCHAR descricao_visual
+        INT indice_desenho
+        VARCHAR caminho_imagem
+        TIMESTAMP data_imagem
+    }
     ESTANDE_TIRO {
         BIGINT id PK
         VARCHAR nome
@@ -220,7 +246,8 @@ erDiagram
     }
     LOG_GERACAO_IMAGEM {
         BIGINT id PK
-        BIGINT estande_tiro_id FK "fica nulo se o estande for excluído"
+        BIGINT estande_tiro_id FK "cenário (nulo se for alvo ou se o estande for excluído)"
+        BIGINT alvo_inimigo_id FK "alvo gerado (nulo se for cenário)"
         TIMESTAMP data_hora
         VARCHAR modelo_usado
         BOOLEAN sucesso
@@ -250,7 +277,8 @@ estande-tiro-ia/
 ├── .gitignore                 ignora .env, *.db, data/ e target/
 ├── pom.xml                    Spring Boot 3.5.16 + Spring AI 1.1.8 (BOM) + H2
 ├── mvnw, mvnw.cmd, .mvn/      Maven Wrapper
-├── assets/cenarios/           imagens geradas (<id>.png)
+├── assets/cenarios/           cenários gerados (<id>.png)
+├── assets/alvos/              inimigos gerados e recortados (<id>.png)
 └── src/
     ├── main/java/com/faculdade/estandetiro/
     │   ├── EstandeTiroApplication.java
@@ -261,16 +289,21 @@ estande-tiro-ia/
     │   ├── controller/
     │   │   ├── EstandeTiroController   CRUD + ações de IA (descrição, prompt, cenário, regenerar)
     │   │   ├── JogoController          página do minigame (/estandes/{id}/jogar)
+    │   │   ├── AlvoController          inimigos: gerar com IA, regenerar, refazer recorte
     │   │   ├── ArmaController          CRUD das armas
     │   │   ├── LogGeracaoController    tela de log
     │   │   ├── StatusIaAdvice          status da IA no topo de todas as telas
     │   │   ├── ErroController          páginas de erro amigáveis
     │   │   ├── HomeController, EstandeForm, ArmaForm
     │   └── model/
-    │       ├── entity/       EstandeTiro, LogGeracaoImagem, Arma, TipoEstande, EstiloVisual, TipoArma
-    │       ├── repository/   EstandeTiroRepository, LogGeracaoImagemRepository, ArmaRepository
+    │       ├── entity/       EstandeTiro, LogGeracaoImagem, Arma, AlvoInimigo,
+    │       │                 TipoEstande, EstiloVisual, TipoArma, ClasseAlvo
+    │       ├── repository/   EstandeTiroRepository, LogGeracaoImagemRepository, ArmaRepository,
+    │       │                 AlvoInimigoRepository
     │       └── service/
     │           ├── EstandeTiroService, LogGeracaoImagemService, ArmaService
+    │           ├── AlvoInimigoService       alvos gerados pela IA (cache, limite, log, recorte grátis)
+    │           ├── ArmazenamentoAlvos       assets/alvos e data/alvos-originais
     │           ├── CenarioService           cache, limite, log e gravação da imagem
     │           ├── LimiteGeracoesImagem     MAX_IMAGE_GENERATIONS por execução
     │           ├── ArmazenamentoCenarios    salva assets/cenarios/<id>.png
@@ -278,16 +311,17 @@ estande-tiro-ia/
     │               ├── IaTextoService       funcionalidades 1 e 2 (Spring AI ChatClient)
     │               ├── ImageService         funcionalidade 3 (RestClient, chave faturada)
     │               ├── PromptImagem         base do prompt + regras obrigatórias
+    │               ├── PromptAlvo, RecorteAlvo   prompt dos inimigos e recorte do fundo magenta
     │               ├── FiltroTermosProibidos
     │               └── TradutorErrosIa, IaException, TipoErroIa, ImagemGerada
     ├── main/resources/
     │   ├── application.properties          só referências ${...} para as chaves
     │   ├── templates/                      layout, estandes/(lista, form, detalhe, jogo, regenerar),
-    │   │                                   armas/(lista, form), logs/lista, error
+    │   │                                   armas/(lista, form), alvos/(lista, regenerar), logs/lista, error
     │   └── static/
     │       ├── css/estilo.css, css/jogo.css   visual, minigame e temas de cada tipo
     │       └── js/app.js, js/alvos.js, js/jogo.js   telas, desenhos dos alvos e motor do minigame
-    └── test/java/...                       26 testes (IA simulada, sem gastar cota)
+    └── test/java/...                       33 testes (IA simulada, sem gastar cota)
 ```
 
 ## Segurança das chaves

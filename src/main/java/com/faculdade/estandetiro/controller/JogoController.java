@@ -1,6 +1,9 @@
 package com.faculdade.estandetiro.controller;
 
+import com.faculdade.estandetiro.model.entity.AlvoInimigo;
 import com.faculdade.estandetiro.model.entity.Arma;
+import com.faculdade.estandetiro.model.entity.EstandeTiro;
+import com.faculdade.estandetiro.model.service.AlvoInimigoService;
 import com.faculdade.estandetiro.model.service.ArmaService;
 import com.faculdade.estandetiro.model.service.EstandeTiroService;
 import org.springframework.stereotype.Controller;
@@ -10,7 +13,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 /**
  * Minigame do estande: o fundo fixo é o cenário gerado por IA e a parte dinâmica são os alvos
- * (inimigos do tema e a refém), desenhados e animados em static/js/alvos.js e static/js/jogo.js.
+ * (inimigos do tema e a refém), animados em static/js/jogo.js. Cada inimigo usa a imagem gerada pela IA
+ * quando ela existe; senão, o desenho SVG de static/js/alvos.js.
  */
 @Controller
 public class JogoController {
@@ -25,18 +29,32 @@ public class JogoController {
         }
     }
 
+    /** Inimigo do tipo do estande: imagem da IA (ou null) e o índice do desenho SVG de reserva. */
+    public record InimigoJogo(String nome, String classe, int indice, String imagem) {
+        static InimigoJogo de(AlvoInimigo a) {
+            return new InimigoJogo(a.getNome(), a.getClasse().getChaveJogo(), a.getIndiceDesenho(),
+                    a.temImagem() ? a.getCaminhoImagem() : null);
+        }
+    }
+
     private final EstandeTiroService estandeService;
     private final ArmaService armaService;
+    private final AlvoInimigoService alvoService;
 
-    public JogoController(EstandeTiroService estandeService, ArmaService armaService) {
+    public JogoController(EstandeTiroService estandeService, ArmaService armaService,
+                          AlvoInimigoService alvoService) {
         this.estandeService = estandeService;
         this.armaService = armaService;
+        this.alvoService = alvoService;
     }
 
     @GetMapping("/estandes/{id}/jogar")
     public String jogar(@PathVariable Long id, Model model) {
-        model.addAttribute("estande", estandeService.buscarPorId(id));
+        EstandeTiro estande = estandeService.buscarPorId(id);
+        model.addAttribute("estande", estande);
         model.addAttribute("armasJogo", armaService.listarTodas().stream().map(ArmaJogo::de).toList());
+        model.addAttribute("inimigosJogo",
+                alvoService.listarPorTipo(estande.getTipo()).stream().map(InimigoJogo::de).toList());
         return "estandes/jogo";
     }
 }

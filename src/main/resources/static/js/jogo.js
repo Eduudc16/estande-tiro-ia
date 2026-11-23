@@ -27,7 +27,14 @@
     const RAIO_EXPLOSAO = 0.11;
     const BONUS_REFEM = 200;
     const ARMAS = (cfg.armas || []).slice(0, 9);
-    const INIMIGOS = Alvos.inimigos(cfg.estande.tipo);
+    const DESENHOS = Alvos.inimigos(cfg.estande.tipo);
+    // inimigos do banco: a imagem gerada pela IA quando existe; senão, o desenho SVG de reserva
+    const INIMIGOS = cfg.inimigos && cfg.inimigos.length
+        ? cfg.inimigos.map(i => i.imagem
+            ? { classe: i.classe, imagem: i.imagem, nome: i.nome }
+            : Object.assign({}, DESENHOS[i.indice] || DESENHOS[0], { classe: i.classe }))
+        : DESENHOS;
+    const MASCARAS = new Map();                   // imagem -> transparência e posição da cabeça
     const CHAVE_RECORDE = 'estande-sombrio:recorde:' + cfg.estande.id;
     const CHAVE_SOM = 'estande-sombrio:som';
 
@@ -172,7 +179,8 @@
             // fila de inimigos deslizando no mesmo trilho
             const trilho = sortear([0, 1, 2]), dir = sortear([-1, 1]);
             const n = Math.random() < 0.4 ? 3 : 2;
-            const leves = INIMIGOS.filter(d => d.classe !== 'forte');
+            const naoFortes = INIMIGOS.filter(d => d.classe !== 'forte');
+            const leves = naoFortes.length ? naoFortes : INIMIGOS;
             for (let i = 0; i < n; i++) {
                 criarAlvo(sortear(leves), { trilho, dir, x: dir > 0 ? 8 - i * 11 : 92 + i * 11, forcar: true },
                     progresso, agora);
@@ -194,12 +202,14 @@
             if (!lugarLivre(o.trilho, x)) return null;
         }
         const el = document.createElement('div');
-        el.className = 'alvo' + (def.refem ? ' refem' : '') + (def.classe === 'forte' ? ' forte' : '');
+        el.className = 'alvo' + (def.refem ? ' refem' : '') + (def.classe === 'forte' ? ' forte' : '')
+            + (def.imagem ? ' imagem' : '');
         el.style.setProperty('--x', x.toFixed(2));
         el.style.setProperty('--base', trilho.base);
         el.style.setProperty('--escala', trilho.escala);
         el.style.zIndex = String(trilho.z);
-        el.innerHTML = Alvos.svg(def) + (classe.vida > 1 ? '<span class="vida"><i></i></span>' : '');
+        const figura = def.imagem ? `<img src="${esc(def.imagem)}" alt="" draggable="false">` : Alvos.svg(def);
+        el.innerHTML = figura + (classe.vida > 1 ? '<span class="vida"><i></i></span>' : '');
         camada.appendChild(el);
         void el.offsetWidth;                      // aplica o estado "deitado" antes de animar a subida
         el.classList.add('de-pe');
@@ -287,8 +297,14 @@
             const caixa = el.closest ? el.closest('.alvo') : null;
             const a = caixa && caixa._alvo;
             if (!a || !vivo(a)) continue;
-            const marca = el.closest('[data-parte]');
-            const parte = marca ? marca.dataset.parte : 'corpo';
+            let parte;
+            if (el.tagName === 'IMG') {
+                parte = parteDaImagem(el, cx, cy);
+                if (!parte) continue;                 // parte transparente da imagem: o tiro passa direto
+            } else {
+                const marca = el.closest('[data-parte]');
+                parte = marca ? marca.dataset.parte : 'corpo';
+            }
             if (!partes.has(a)) {
                 if (!perfura && partes.size) break;   // tiro comum para no primeiro alvo
                 partes.set(a, parte);
@@ -308,6 +324,56 @@
             if (!rodando) break;
         }
         return acertou;
+    }
+
+    // ------------------------------------------------------------ alvos com imagem da IA
+    /** Carrega as imagens antes da partida e guarda a transparência de cada uma (para o acerto no pixel). */
+    function prepararImagens() {
+        const urls = [...new Set(INIMIGOS.filter(d => d.imagem).map(d => d.imagem))];
+        return Promise.all(urls.map(url => new Promise(pronto => {
+            const img = new Image();
+            img.onload = () => {
+                try { MASCARAS.set(url, mascara(img)); } catch (e) { /* sem máscara: vale a caixa inteira */ }
+                pronto();
+            };
+            img.onerror = () => pronto();
+            img.src = url;
+        })));
+    }
+
+    /** Transparência da imagem + a cabeça (centro da faixa mais alta do recorte). */
+    function mascara(img) {
+        const w = img.naturalWidth, h = img.naturalHeight;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+        const dados = ctx.getImageData(0, 0, w, h).data;
+        const alfa = new Uint8Array(w * h);
+        for (let i = 0; i < alfa.length; i++) alfa[i] = dados[i * 4 + 3];
+        const opaca = y => { for (let x = 0; x < w; x++) if (alfa[y * w + x] > 128) return true; return false; };
+        let topo = 0;
+        while (topo < h && !opaca(topo)) topo++;
+        let soma = 0, n = 0;
+        for (let y = topo; y < Math.min(h, topo + Math.round(h * 0.12)); y++) {
+            for (let x = 0; x < w; x++) if (alfa[y * w + x] > 128) { soma += x; n++; }
+        }
+        const centro = n ? soma / n / w : 0.5;
+        const meia = (h * 0.07) / w;
+        return { w, h, alfa, cabeca: { x0: centro - meia, x1: centro + meia, y1: (topo + h * 0.17) / h } };
+    }
+
+    /** 'cabeca', 'corpo' ou null (parte transparente) no ponto da tela. */
+    function parteDaImagem(img, cx, cy) {
+        const r = img.getBoundingClientRect();
+        const u = (cx - r.left) / r.width, v = (cy - r.top) / r.height;
+        if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+        const m = MASCARAS.get(img.getAttribute('src'));
+        if (!m) return 'corpo';
+        const x = Math.min(m.w - 1, Math.floor(u * m.w)), y = Math.min(m.h - 1, Math.floor(v * m.h));
+        if (m.alfa[y * m.w + x] < 60) return null;
+        return v <= m.cabeca.y1 && u >= m.cabeca.x0 && u <= m.cabeca.x1 ? 'cabeca' : 'corpo';
     }
 
     function explodir(cx, cy, arma) {
@@ -656,7 +722,10 @@
         if (recarga) { recarga.inicio += d; recarga.fim += d; }
     });
 
-    document.querySelectorAll('[data-comecar]').forEach(b => b.addEventListener('click', comecar));
+    // só libera o "Começar" depois que as imagens dos alvos carregarem
+    const botoesComecar = document.querySelectorAll('[data-comecar]');
+    botoesComecar.forEach(b => { b.disabled = true; b.addEventListener('click', comecar); });
+    prepararImagens().then(() => botoesComecar.forEach(b => { b.disabled = !ARMAS.length; }));
     if (botaoSom) {
         botaoSom.addEventListener('click', () => {
             somLigado = !somLigado;

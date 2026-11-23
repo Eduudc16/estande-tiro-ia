@@ -114,6 +114,45 @@
 .alvo.atingido svg { animation: atingido .14s; }
 .alvo.refem svg { filter: drop-shadow(0 0 4px rgba(255, 232, 140, .95)) drop-shadow(0 8px 6px rgba(0, 0, 0, .6)); }
 .alvo.refem-atingida svg { filter: drop-shadow(0 0 10px #ff2828); }
+/* alvo com imagem gerada pela IA: a largura vem da própria imagem, com a haste de madeira embaixo */
+.alvo.imagem { aspect-ratio: auto; }
+.alvo.imagem.forte { height: calc(37% * var(--escala)); }
+.alvo.imagem img {
+    display: block; height: 100%; width: auto; pointer-events: auto;
+    user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 8px 6px rgba(0, 0, 0, .6));
+}
+.alvo.imagem::after {
+    content: ""; position: absolute; z-index: -1; left: 50%; bottom: -7%; transform: translateX(-50%);
+    width: 6%; min-width: 4px; height: 9%; background: #3a2716; border-radius: 1px;
+}
+.alvo.imagem.atingido img { animation: atingido .14s; }
+
+/* tela de alvos */
+.grupo-alvos { margin-top: 1.5rem; scroll-margin-top: 1rem; }
+.grupo-alvos h2 { margin-top: 0; }
+.grade-alvos { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 1rem; }
+.cartao-alvo {
+    display: flex; flex-direction: column; gap: .6rem; padding: .9rem; border-radius: 8px;
+    background: var(--fundo-2); border: 1px solid var(--borda);
+}
+.cartao-alvo h3 { margin: 0; font-size: 1rem; }
+.cartao-alvo-corpo { flex: 1; display: flex; flex-direction: column; gap: .3rem; }
+.descricao-visual { margin: 0; font-size: .76rem; color: #c9bba0; line-height: 1.4; }
+.alvo-previa {
+    position: relative; height: 230px; display: grid; place-items: center; border-radius: 6px; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, rgba(224, 166, 58, .14), transparent 70%), #120e0a;
+    border: 1px solid var(--borda);
+}
+.alvo-previa img, .alvo-previa svg { height: 92%; width: auto; max-width: 96%; object-fit: contain; display: block; }
+.alvo-previa .alvo-desenho { height: 100%; width: 100%; display: grid; place-items: center; }
+.alvo-previa.grande { height: 340px; }
+.selo-origem {
+    position: absolute; left: .45rem; top: .45rem; padding: .1rem .5rem; border-radius: 999px;
+    font-size: .68rem; font-weight: 600; background: rgba(0, 0, 0, .65); color: var(--texto-2); border: 1px solid var(--borda);
+}
+.selo-origem.ia { color: #1a1410; background: var(--lampiao); border-color: var(--lampiao); }
+.centro { text-align: center; }
+
 .alvo .vida {
     position: absolute; left: 22%; right: 22%; top: -5%; height: 5px; overflow: hidden;
     background: rgba(0, 0, 0, .75); border: 1px solid rgba(255, 255, 255, .35); border-radius: 3px;

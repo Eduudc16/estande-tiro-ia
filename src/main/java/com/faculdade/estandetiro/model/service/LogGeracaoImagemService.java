@@ -1,5 +1,6 @@
 package com.faculdade.estandetiro.model.service;
 
+import com.faculdade.estandetiro.model.entity.AlvoInimigo;
 import com.faculdade.estandetiro.model.entity.EstandeTiro;
 import com.faculdade.estandetiro.model.entity.LogGeracaoImagem;
 import com.faculdade.estandetiro.model.repository.LogGeracaoImagemRepository;
@@ -35,6 +36,16 @@ public class LogGeracaoImagemService {
     @Transactional
     public void registrarFalha(EstandeTiro estande, String modelo, String mensagemErro) {
         repository.save(LogGeracaoImagem.falha(estande, modelo, mensagemErro));
+    }
+
+    @Transactional
+    public void registrarSucessoAlvo(AlvoInimigo alvo, String modelo) {
+        repository.save(LogGeracaoImagem.sucessoAlvo(alvo, modelo));
+    }
+
+    @Transactional
+    public void registrarFalhaAlvo(AlvoInimigo alvo, String modelo, String mensagemErro) {
+        repository.save(LogGeracaoImagem.falhaAlvo(alvo, modelo, mensagemErro));
     }
 
     @Transactional(readOnly = true)
