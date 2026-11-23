@@ -2,7 +2,6 @@ package com.faculdade.estandetiro.controller;
 
 import com.faculdade.estandetiro.model.entity.AlvoInimigo;
 import com.faculdade.estandetiro.model.entity.Arma;
-import com.faculdade.estandetiro.model.entity.ClasseAlvo;
 import com.faculdade.estandetiro.model.entity.EstandeTiro;
 import com.faculdade.estandetiro.model.service.AlvoInimigoService;
 import com.faculdade.estandetiro.model.service.ArmaService;
@@ -11,8 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-
-import java.util.List;
 
 /**
  * Minigame do estande: o fundo fixo é o cenário gerado por IA e a parte dinâmica são os alvos
@@ -54,15 +51,14 @@ public class JogoController {
     @GetMapping("/estandes/{id}/jogar")
     public String jogar(@PathVariable Long id, Model model) {
         EstandeTiro estande = estandeService.buscarPorId(id);
-        List<AlvoInimigo> alvos = alvoService.listarPorTipo(estande.getTipo());
+        AlvoInimigoService.AlvosDoJogo alvos = alvoService.alvosParaJogo(estande.getTipo());
         model.addAttribute("estande", estande);
+        model.addAttribute("alvos", alvos);
         model.addAttribute("armasJogo", armaService.listarTodas().stream().map(ArmaJogo::de).toList());
-        model.addAttribute("inimigosJogo", alvos.stream()
-                .filter(a -> a.getClasse() != ClasseAlvo.REFEM).map(InimigoJogo::de).toList());
-        // imagem da refém deste tipo (null = usa o desenho da refém)
-        model.addAttribute("refemJogo", alvos.stream()
-                .filter(a -> a.getClasse() == ClasseAlvo.REFEM && a.temImagem())
-                .map(AlvoInimigo::getCaminhoImagem).findFirst().orElse(null));
+        model.addAttribute("inimigosJogo", alvos.inimigos().stream().map(InimigoJogo::de).toList());
+        // imagem da refém (null = usa o desenho da refém)
+        model.addAttribute("refemJogo", alvos.refem() != null && alvos.refem().temImagem()
+                ? alvos.refem().getCaminhoImagem() : null);
         return "estandes/jogo";
     }
 }

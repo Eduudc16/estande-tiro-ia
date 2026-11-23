@@ -27,7 +27,8 @@
     const RAIO_EXPLOSAO = 0.11;
     const BONUS_REFEM = 200;
     const ARMAS = (cfg.armas || []).slice(0, 9);
-    const DESENHOS = Alvos.inimigos(cfg.estande.tipo);
+    // desenhos de reserva do tipo cujos inimigos o jogo usa (pode ser outro tipo, se este ainda não tem imagens)
+    const DESENHOS = Alvos.inimigos(cfg.tipoAlvos || cfg.estande.tipo);
     // inimigos do banco: a imagem gerada pela IA quando existe; senão, o desenho SVG de reserva
     const INIMIGOS = cfg.inimigos && cfg.inimigos.length
         ? cfg.inimigos.map(i => i.imagem

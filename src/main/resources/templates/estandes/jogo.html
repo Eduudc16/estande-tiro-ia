@@ -14,7 +14,8 @@
             <h1 th:text="${estande.nome}">Nome</h1>
             <p class="meta">
                 <span class="etiqueta" th:text="${estande.tipo.rotulo}">Tipo</span>
-                <span class="sub" th:text="'Inimigos: ' + ${estande.tipo.inimigos}">Inimigos</span>
+                <span class="sub" th:text="'Inimigos: ' + ${alvos.tipoDosInimigos().inimigos}
+                        + (${alvos.inimigosEmprestados(estande.tipo)} ? ' (imagens da IA da ' + ${#strings.toLowerCase(alvos.tipoDosInimigos().rotulo)} + ')' : '')">Inimigos</span>
             </p>
         </div>
         <div class="acoes">
@@ -53,7 +54,7 @@
             <div class="jogo-cartao">
                 <h2 th:text="${estande.nome}">Estande</h2>
                 <ul class="regras">
-                    <li>Derrube os <b th:text="${#strings.toLowerCase(estande.tipo.inimigos)}">inimigos</b> que surgem
+                    <li>Derrube os <b th:text="${#strings.toLowerCase(alvos.tipoDosInimigos().inimigos)}">inimigos</b> que surgem
                         nos trilhos. Os maiores aguentam vários tiros; escudos bloqueiam tiros comuns.</li>
                     <li><b class="texto-perigo">Não acerte a refém</b> (placa “REFÉM”): se acertar, você perde.
                         Se ela sair ilesa, você ganha +200.</li>
@@ -103,6 +104,7 @@
 <script th:inline="javascript">
     window.JOGO = {
         estande: { id: [[${estande.id}]], tipo: [[${estande.tipo.name()}]] },
+        tipoAlvos: [[${alvos.tipoDosInimigos().name()}]],
         armas: [[${armasJogo}]],
         inimigos: [[${inimigosJogo}]],
         refem: [[${refemJogo}]]

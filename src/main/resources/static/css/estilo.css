@@ -305,3 +305,14 @@ details.opcional label + label { margin-top: 1rem; }
     .card-estande, .btn { transition: none; }
     .btn.carregando::before { animation-duration: 2s; }
 }
+
+/* ---------- caixa de confirmação (substitui o window.confirm, bloqueado no navegador embutido) ---------- */
+.modal-confirmacao {
+    padding: 0; width: min(440px, calc(100vw - 32px)); border: 1px solid var(--sangue); border-radius: 10px;
+    background: var(--painel); color: var(--texto); box-shadow: 0 20px 60px rgba(0, 0, 0, .7);
+}
+.modal-confirmacao::backdrop { background: rgba(0, 0, 0, .6); }
+.modal-corpo { padding: 1.2rem 1.3rem; display: flex; flex-direction: column; gap: .8rem; }
+.modal-corpo h2 { margin: 0; font-size: 1.1rem; color: var(--sangue-claro); }
+.modal-corpo p { margin: 0; line-height: 1.5; }
+.modal-corpo .acoes { justify-content: flex-end; }

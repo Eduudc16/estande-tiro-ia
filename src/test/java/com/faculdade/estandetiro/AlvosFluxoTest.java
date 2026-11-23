@@ -146,6 +146,32 @@ class AlvosFluxoTest {
     }
 
     @Test
+    void tipoSemImagensUsaOsAlvosJaGeradosETipoComImagensUsaOsProprios() throws Exception {
+        // gera um inimigo da vila e a refém do porto; a mina e o castelo ainda não têm nada
+        mvc.perform(post("/alvos/{id}/gerar", alvo(TipoEstande.VILA_RURAL, 3).getId()));
+        mvc.perform(post("/alvos/{id}/gerar", alvo(TipoEstande.PORTO, -1).getId()));
+
+        EstandeTiro mina = estande(TipoEstande.MINA);
+        mvc.perform(get("/estandes/{id}/jogar", mina.getId()))
+                .andExpect(content().string(not(containsString("tipoAlvos: \"MINA\""))))   // emprestou de outro tipo
+                .andExpect(content().string(containsString("\"imagem\":\"\\/assets\\/alvos\\/")))
+                .andExpect(content().string(containsString("refem: \"\\/assets\\/alvos\\/")))
+                .andExpect(content().string(containsString("imagens da IA da")));
+        mvc.perform(get("/estandes/{id}", mina.getId()))
+                .andExpect(content().string(containsString("gerar os deste tipo")));
+
+        // quando o castelo ganha uma imagem própria, passa a usar os seus inimigos
+        mvc.perform(post("/alvos/{id}/gerar", alvo(TipoEstande.CASTELO, 0).getId()));
+        mvc.perform(get("/estandes/{id}/jogar", estande(TipoEstande.CASTELO).getId()))
+                .andExpect(content().string(containsString("tipoAlvos: \"CASTELO\"")))
+                .andExpect(content().string(not(containsString("imagens da IA da"))));
+    }
+
+    private EstandeTiro estande(TipoEstande tipo) {
+        return estandeService.listarTodos().stream().filter(e -> e.getTipo() == tipo).findFirst().orElseThrow();
+    }
+
+    @Test
     void falhaDaApiFicaNoLogEOAlvoContinuaSemImagem() throws Exception {
         AlvoInimigo foice = alvo(TipoEstande.VILA_RURAL, 2);
         when(imageService.gerar(anyString(), anyString())).thenThrow(new IaException(TipoErroIa.COTA_ESGOTADA,

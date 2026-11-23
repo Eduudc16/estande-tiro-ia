@@ -3,6 +3,7 @@ package com.faculdade.estandetiro.controller;
 import com.faculdade.estandetiro.model.entity.EstandeTiro;
 import com.faculdade.estandetiro.model.entity.EstiloVisual;
 import com.faculdade.estandetiro.model.entity.TipoEstande;
+import com.faculdade.estandetiro.model.service.AlvoInimigoService;
 import com.faculdade.estandetiro.model.service.CenarioService;
 import com.faculdade.estandetiro.model.service.EstandeTiroService;
 import com.faculdade.estandetiro.model.service.LimiteGeracoesImagem;
@@ -31,15 +32,17 @@ public class EstandeTiroController {
     private final CenarioService cenarioService;
     private final LogGeracaoImagemService logService;
     private final LimiteGeracoesImagem limite;
+    private final AlvoInimigoService alvoService;
 
     public EstandeTiroController(EstandeTiroService estandeService, IaTextoService iaTextoService,
                                  CenarioService cenarioService, LogGeracaoImagemService logService,
-                                 LimiteGeracoesImagem limite) {
+                                 LimiteGeracoesImagem limite, AlvoInimigoService alvoService) {
         this.estandeService = estandeService;
         this.iaTextoService = iaTextoService;
         this.cenarioService = cenarioService;
         this.logService = logService;
         this.limite = limite;
+        this.alvoService = alvoService;
     }
 
     // ------------------------------------------------------------------ CRUD
@@ -73,6 +76,7 @@ public class EstandeTiroController {
         model.addAttribute("logs", logService.ultimosDoEstande(id));
         model.addAttribute("precoImagem", logService.getPrecoPorImagemUsd());
         model.addAttribute("gerandoAgora", cenarioService.emAndamento(id));
+        model.addAttribute("alvos", alvoService.alvosParaJogo(estandeService.buscarPorId(id).getTipo()));
         return "estandes/detalhe";
     }
 

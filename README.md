@@ -67,6 +67,8 @@ mina), ainda sem textos nem imagens, e as 6 armas do minigame. Se a porta 8080 e
 `application.properties` faz o Spring Boot ler o `.env` como arquivo de propriedades, sem nenhuma dependência extra.
 Variáveis de ambiente do sistema, se existirem, têm prioridade sobre o `.env`.
 
+**Arquivos CSS e JS com versão:** o nome de cada arquivo leva um código do conteúdo (ex.: `/js/app-5123….js`), então o navegador sempre baixa a versão nova depois de uma atualização, em vez de usar a antiga do cache.
+
 **Testes:** `.\mvnw.cmd test` roda 34 testes. Neles a IA é simulada (mocks), então eles não usam as chaves nem gastam
 cota.
 
@@ -181,6 +183,7 @@ arma define o comportamento, que está programado em `static/js/jogo.js`.
 - Nas imagens, o acerto é conferido no pixel: tiro na parte transparente passa direto. A cabeça é achada
   automaticamente no topo do recorte.
 - A refém com imagem da IA ganha uma placa "REFÉM" acima da cabeça.
+- Se o tipo do estande ainda não tem nenhuma imagem da IA, o jogo **usa os alvos já gerados de outro tipo** (hoje, os aldeões e a refém da vila) em vez dos desenhos. A tela do estande avisa e tem o link "gerar os deste tipo". Quando o tipo ganha imagens próprias, passa a usá-las.
 - Nada usa imagens ou personagens de outros jogos.
 
 **Som e música:** tudo é sintetizado na hora com a Web Audio API, em

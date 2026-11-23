@@ -15,7 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -67,6 +71,53 @@ public class AlvoInimigoService {
     @Transactional(readOnly = true)
     public long contarRefens() {
         return repository.countByClasse(ClasseAlvo.REFEM);
+    }
+
+    /**
+     * Alvos que o jogo de um estande usa.
+     *
+     * @param tipoDosInimigos tipo cujos inimigos foram usados (difere do tipo do estande quando foram emprestados)
+     */
+    public record AlvosDoJogo(TipoEstande tipoDosInimigos, List<AlvoInimigo> inimigos, AlvoInimigo refem) {
+        public boolean inimigosEmprestados(TipoEstande tipoDoEstande) {
+            return tipoDosInimigos != tipoDoEstande;
+        }
+    }
+
+    /**
+     * Os inimigos e a refém do próprio tipo do estande. Se o tipo ainda não tem nenhuma imagem gerada pela IA,
+     * usa os inimigos do tipo que mais tem imagens (e a refém já gerada), em vez dos desenhos: assim um estande
+     * novo já aparece com os modelos da IA. Quando o tipo ganha as próprias imagens, passa a usá-las.
+     */
+    @Transactional(readOnly = true)
+    public AlvosDoJogo alvosParaJogo(TipoEstande tipo) {
+        Map<TipoEstande, List<AlvoInimigo>> porTipo = new EnumMap<>(TipoEstande.class);
+        repository.findAllByOrderByTipoEstandeAscIndiceDesenhoAsc()
+                .forEach(a -> porTipo.computeIfAbsent(a.getTipoEstande(), t -> new ArrayList<>()).add(a));
+
+        TipoEstande tipoDosInimigos = tipo;
+        if (inimigosComImagem(porTipo.get(tipo)) == 0) {
+            tipoDosInimigos = porTipo.keySet().stream()
+                    .filter(t -> inimigosComImagem(porTipo.get(t)) > 0)
+                    .max(Comparator.comparingLong(t -> inimigosComImagem(porTipo.get(t))))
+                    .orElse(tipo);
+        }
+        List<AlvoInimigo> inimigos = porTipo.getOrDefault(tipoDosInimigos, List.of()).stream()
+                .filter(a -> a.getClasse() != ClasseAlvo.REFEM).toList();
+
+        AlvoInimigo refemDoTipo = porTipo.getOrDefault(tipo, List.of()).stream()
+                .filter(a -> a.getClasse() == ClasseAlvo.REFEM).findFirst().orElse(null);
+        AlvoInimigo refem = refemDoTipo != null && refemDoTipo.temImagem() ? refemDoTipo
+                : porTipo.values().stream().flatMap(List::stream)
+                .filter(a -> a.getClasse() == ClasseAlvo.REFEM && a.temImagem())
+                .max(Comparator.comparing(AlvoInimigo::getDataImagem))
+                .orElse(refemDoTipo);
+        return new AlvosDoJogo(tipoDosInimigos, inimigos, refem);
+    }
+
+    private static long inimigosComImagem(List<AlvoInimigo> alvos) {
+        return alvos == null ? 0 : alvos.stream()
+                .filter(a -> a.getClasse() != ClasseAlvo.REFEM && a.temImagem()).count();
     }
 
     @Transactional

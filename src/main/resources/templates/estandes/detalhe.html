@@ -39,9 +39,13 @@
             <div class="palco-rodape">
                 <a class="btn primario" th:href="@{/estandes/{id}/jogar(id=${estande.id})}">▶ Jogar neste estande</a>
                 <small class="sub">
-                    Inimigos: <a class="link" th:href="@{/alvos} + '#tipo-' + ${estande.tipo.cssTema}"
-                                 th:text="${estande.tipo.inimigos}">Aldeões</a> · a refém não pode ser atingida ·
-                    <a class="link" th:href="@{/armas}">armas</a>
+                    Inimigos: <a class="link" th:href="@{/alvos} + '#tipo-' + ${alvos.tipoDosInimigos().cssTema}"
+                                 th:text="${alvos.tipoDosInimigos().inimigos}">Aldeões</a>
+                    <th:block th:if="${alvos.inimigosEmprestados(estande.tipo)}">
+                        (imagens da IA da <span th:text="${#strings.toLowerCase(alvos.tipoDosInimigos().rotulo)}">vila</span>;
+                        <a class="link" th:href="@{/alvos} + '#tipo-' + ${estande.tipo.cssTema}">gerar os deste tipo</a>)
+                    </th:block>
+                    · a refém não pode ser atingida · <a class="link" th:href="@{/armas}">armas</a>
                 </small>
             </div>
             <p class="sub" th:if="${estande.temImagem()}">Arquivo: <code th:text="'assets' + ${#strings.substringAfter(estande.caminhoImagem, '/assets')}">assets/cenarios/1.png</code></p>

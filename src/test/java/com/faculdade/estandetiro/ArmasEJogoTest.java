@@ -85,7 +85,7 @@ class ArmasEJogoTest {
                 .andExpect(content().string(containsString("Cultistas encapuzados")))
                 .andExpect(content().string(containsString("\"tipo\":\"ESCOPETA\"")))
                 .andExpect(content().string(containsString("tipo: \"CASTELO\"")))
-                .andExpect(content().string(containsString("/js/jogo.js")));
+                .andExpect(content().string(containsString("/js/jogo-")));
     }
 
     @Test
