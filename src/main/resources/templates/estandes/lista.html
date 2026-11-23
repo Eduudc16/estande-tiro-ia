@@ -32,6 +32,7 @@
                 </ul>
             </div>
             <div class="card-acoes">
+                <a class="btn pequeno primario" th:href="@{/estandes/{id}/jogar(id=${e.id})}">▶ Jogar</a>
                 <a class="btn pequeno" th:href="@{/estandes/{id}(id=${e.id})}">Abrir</a>
                 <a class="btn pequeno fantasma" th:href="@{/estandes/{id}/editar(id=${e.id})}">Editar</a>
                 <form class="inline" th:action="@{/estandes/{id}/excluir(id=${e.id})}" method="post"

@@ -1,0 +1,297 @@
+/* Estande Sombrio — minigame, armas e temas de cada tipo de estande */
+
+/* ---------- temas: moldura do palco + efeito de ambiente (o cenário ao redor muda com o tipo) ---------- */
+.tema-vila_rural { --moldura: #4a3220; --moldura-2: #8a6420; }
+.tema-castelo { --moldura: #5d5954; --moldura-2: #a29c94; }
+.tema-base_militar { --moldura: #4b5560; --moldura-2: #c9a63a; }
+.tema-mina { --moldura: #4a3b2e; --moldura-2: #7a6040; }
+.tema-porto { --moldura: #6b5232; --moldura-2: #9a7a4a; }
+
+.palco, .jogo-palco { border-color: var(--moldura, #2a1d12); }
+.palco { box-shadow: 0 0 0 1px var(--moldura-2, var(--lampiao-escuro)), 0 14px 40px rgba(0, 0, 0, .6); }
+
+.ambiente { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.ambiente::before, .ambiente::after { content: ""; position: absolute; inset: 0; }
+
+/* vila: névoa baixa passando */
+.tema-vila_rural .ambiente::before {
+    inset: auto -40% 4% -40%; height: 48%;
+    background:
+        radial-gradient(ellipse 28% 55% at 25% 70%, rgba(205, 205, 195, .22), transparent 70%),
+        radial-gradient(ellipse 30% 45% at 70% 62%, rgba(205, 205, 195, .16), transparent 70%),
+        radial-gradient(ellipse 26% 50% at 48% 82%, rgba(205, 205, 195, .14), transparent 70%);
+    animation: nevoa 24s ease-in-out infinite alternate;
+}
+/* castelo: luz de velas tremendo e relâmpagos no vitral */
+.tema-castelo .ambiente::before {
+    background: radial-gradient(ellipse at 50% 35%, transparent 45%, rgba(30, 8, 0, .5));
+    animation: velas 2.4s steps(5) infinite;
+}
+.tema-castelo .ambiente::after { animation: relampago 10s infinite; }
+/* base militar: holofote varrendo e luz de emergência */
+.tema-base_militar .ambiente::before {
+    inset: -30% -10% 0;
+    background: conic-gradient(from 168deg at 50% 0%, transparent 0deg, rgba(225, 240, 255, .13) 8deg,
+        rgba(225, 240, 255, .13) 16deg, transparent 24deg);
+    transform-origin: 50% 0%;
+    animation: holofote 6s ease-in-out infinite alternate;
+}
+.tema-base_militar .ambiente::after {
+    box-shadow: inset 0 0 90px rgba(255, 30, 30, .45);
+    animation: emergencia 2.2s ease-in-out infinite;
+}
+/* mina: poeira caindo e lanterna oscilando */
+.tema-mina .ambiente::before {
+    background-image:
+        radial-gradient(circle, rgba(235, 215, 175, .55) 0 1px, transparent 1.8px),
+        radial-gradient(circle, rgba(235, 215, 175, .35) 0 1.2px, transparent 2px);
+    background-size: 80px 110px, 130px 150px;
+    background-position: 0 0, 40px 60px;
+    animation: poeira 12s linear infinite;
+}
+.tema-mina .ambiente::after {
+    background: radial-gradient(ellipse at 50% 25%, transparent 45%, rgba(0, 0, 0, .4));
+    animation: lampiao 3s steps(6) infinite;
+}
+/* porto: lanterna de navio balançando e relâmpagos */
+.tema-porto .ambiente::before {
+    background: radial-gradient(ellipse 30% 40% at 50% 12%, rgba(255, 190, 90, .17), transparent 70%);
+    animation: balanco 4s ease-in-out infinite alternate;
+}
+.tema-porto .ambiente::after { animation: relampago 8s infinite; }
+
+@keyframes nevoa { from { transform: translateX(-10%); } to { transform: translateX(10%); } }
+@keyframes velas { 0%, 100% { opacity: .85; } 25% { opacity: .65; } 50% { opacity: 1; } 75% { opacity: .7; } }
+@keyframes relampago {
+    0%, 90%, 94%, 100% { background-color: rgba(220, 230, 255, 0); }
+    91%, 93% { background-color: rgba(220, 230, 255, .3); }
+}
+@keyframes holofote { from { transform: rotate(-16deg); } to { transform: rotate(16deg); } }
+@keyframes emergencia { 0%, 100% { opacity: .15; } 50% { opacity: .85; } }
+@keyframes poeira { to { background-position: 0 220px, 40px 360px; } }
+@keyframes lampiao { 0%, 100% { opacity: .8; } 40% { opacity: 1; } 60% { opacity: .6; } }
+@keyframes balanco { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
+
+/* botão "Jogar" sobre o cenário (tela do estande) */
+.botao-jogar {
+    position: absolute; left: 50%; bottom: 7%; z-index: 6; transform: translateX(-50%);
+    padding: .6rem 1.5rem; border-radius: 999px; text-decoration: none;
+    background: rgba(224, 166, 58, .94); color: #1a1410;
+    font: 600 1.05rem var(--fonte-titulo); letter-spacing: .1em; text-transform: uppercase;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .6);
+    opacity: 0; transition: opacity .2s, transform .2s;
+}
+.palco:hover .botao-jogar, .botao-jogar:focus-visible { opacity: 1; transform: translateX(-50%) scale(1.04); }
+@media (hover: none) { .botao-jogar { opacity: 1; } }
+
+/* ---------- palco do jogo ---------- */
+.conteudo.largo { max-width: 1320px; }
+.jogo-palco {
+    position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 10px; background: #000;
+    border: 4px solid var(--moldura, #2a1d12);
+    box-shadow: 0 0 0 1px var(--moldura-2, var(--lampiao-escuro)), 0 18px 50px rgba(0, 0, 0, .65);
+    user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.jogo-palco.jogando { cursor: none; }
+.jogo-mundo { position: absolute; inset: 0; transition: transform .14s ease-out; }
+.jogo-palco.mirando .jogo-mundo { transform: scale(2.4); }
+.jogo-mundo > img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.jogo-alvos, .jogo-efeitos { position: absolute; inset: 0; pointer-events: none; }
+.jogo-alvos { perspective: 900px; }
+
+/* alvos: recortes de madeira presos ao trilho */
+.alvo {
+    position: absolute; left: calc(var(--x) * 1%); bottom: calc(var(--base) * 1%);
+    height: calc(34% * var(--escala)); aspect-ratio: 1 / 2;
+    transform: translateX(-50%) scaleY(0); transform-origin: 50% 100%;
+    transition: transform .17s ease-out;
+    pointer-events: none;
+}
+.alvo.de-pe { transform: translateX(-50%) scaleY(1); }
+.alvo.caido { transform: translateX(-50%) rotateX(84deg); transition: transform .36s ease-in; }
+.alvo svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 8px 6px rgba(0, 0, 0, .6)); }
+.alvo svg [data-hit], .alvo svg [data-parte] { pointer-events: visiblePainted; }
+.alvo.atingido svg { animation: atingido .14s; }
+.alvo.refem svg { filter: drop-shadow(0 0 4px rgba(255, 232, 140, .95)) drop-shadow(0 8px 6px rgba(0, 0, 0, .6)); }
+.alvo.refem-atingida svg { filter: drop-shadow(0 0 10px #ff2828); }
+.alvo .vida {
+    position: absolute; left: 22%; right: 22%; top: -5%; height: 5px; overflow: hidden;
+    background: rgba(0, 0, 0, .75); border: 1px solid rgba(255, 255, 255, .35); border-radius: 3px;
+}
+.alvo .vida i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #d33, #f5a623); transition: width .15s; }
+.alvo .chama { transform-box: fill-box; transform-origin: 50% 100%; animation: chama .22s steps(2) infinite alternate; }
+.alvo .brilho { animation: brilho 1.3s ease-in-out infinite alternate; }
+@keyframes atingido { 50% { filter: brightness(2.3) saturate(.3); } }
+@keyframes chama { to { transform: scale(.9, 1.14); } }
+@keyframes brilho { to { opacity: .5; } }
+
+/* efeitos de tiro */
+.impacto, .faisca, .explosao { position: absolute; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%); }
+.impacto { width: .9%; background: radial-gradient(circle, #0b0705 0 35%, rgba(60, 40, 25, .85) 45%, transparent 70%); animation: some 1.2s ease-in forwards; }
+.faisca { width: 2.4%; background: radial-gradient(circle, #fff 0 15%, #ffd36b 30%, transparent 65%); animation: some .35s ease-out forwards; }
+.explosao {
+    width: calc(var(--r) * 2);
+    background: radial-gradient(circle, #fff6d6 0 12%, #ffb13b 28%, #e0521f 48%, rgba(80, 30, 10, .6) 62%, transparent 72%);
+    animation: explosao .6s ease-out forwards;
+}
+.pontos-voando {
+    position: absolute; transform: translateX(-50%); white-space: nowrap;
+    color: #fff; font: 600 clamp(.75rem, 1.6vw, 1.15rem) var(--fonte-titulo); text-shadow: 0 2px 4px #000;
+    animation: sobe-some .9s ease-out forwards;
+}
+.pontos-voando.destaque { color: #ffd36b; }
+@keyframes some { 70% { opacity: 1; } to { opacity: 0; } }
+@keyframes explosao {
+    from { transform: translate(-50%, -50%) scale(.2); }
+    40% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    to { transform: translate(-50%, -50%) scale(1.15); opacity: 0; }
+}
+@keyframes sobe-some { to { transform: translate(-50%, -40px); opacity: 0; } }
+.jogo-palco.tremor { animation: tremor .32s; }
+@keyframes tremor {
+    20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); }
+    60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); }
+}
+.jogo-palco.alerta-refem::after {
+    content: ""; position: absolute; inset: 0; z-index: 25; pointer-events: none;
+    background: rgba(200, 0, 0, .35); animation: some 1s forwards;
+}
+
+/* mira e luneta do rifle */
+.jogo-mira {
+    position: absolute; left: var(--mx, 50%); top: var(--my, 50%); z-index: 20; pointer-events: none;
+    width: calc(var(--raio-mira, 12px) * 2); aspect-ratio: 1; transform: translate(-50%, -50%);
+    border: 2px solid rgba(255, 255, 255, .85); border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .6), inset 0 0 0 1px rgba(0, 0, 0, .4);
+}
+.jogo-mira::before, .jogo-mira::after {
+    content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    background: #ff5a44; box-shadow: 0 0 2px #000;
+}
+.jogo-mira::before { width: 14px; height: 2px; }
+.jogo-mira::after { width: 2px; height: 14px; }
+.jogo-mira[data-tipo="LANCA_GRANADAS"] { border-style: dashed; border-color: rgba(255, 170, 60, .9); }
+.jogo-mira[data-tipo="ESCOPETA"], .jogo-mira[data-tipo="SUBMETRALHADORA"] { border-color: rgba(255, 255, 255, .55); }
+.jogo-palco.recarregando .jogo-mira { opacity: .45; }
+.jogo-palco.mirando .jogo-mira { opacity: 0; }
+.jogo-luneta {
+    position: absolute; inset: 0; z-index: 19; pointer-events: none; opacity: 0; transition: opacity .12s;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+        transparent 0 var(--raio-luneta, 140px), rgba(0, 0, 0, .94) calc(var(--raio-luneta, 140px) + 2px));
+}
+.jogo-luneta::before, .jogo-luneta::after { content: ""; position: absolute; background: rgba(0, 0, 0, .85); }
+.jogo-luneta::before { left: var(--mx, 50%); top: 0; bottom: 0; width: 1.5px; transform: translateX(-50%); }
+.jogo-luneta::after { top: var(--my, 50%); left: 0; right: 0; height: 1.5px; transform: translateY(-50%); }
+.jogo-palco.mirando .jogo-luneta { opacity: 1; }
+
+/* HUD */
+.jogo-hud { position: absolute; inset: 0; z-index: 21; pointer-events: none; font-family: var(--fonte-titulo); }
+.hud-tempo {
+    position: absolute; top: 3%; left: 50%; transform: translateX(-50%);
+    padding: .15rem 1rem; font-size: clamp(.9rem, 2.2vw, 1.5rem); color: #f3ead6;
+    background: linear-gradient(#6b6258, #3f3832); border: 2px solid #1d1915; border-radius: 4px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, .6); font-variant-numeric: tabular-nums;
+}
+.hud-tempo.acabando { color: #ffb3a8; }
+.hud-pontos { position: absolute; top: 3%; right: 2.5%; color: #fff; font-size: clamp(.9rem, 2.2vw, 1.5rem); text-shadow: 0 2px 6px #000; }
+.hud-pontos small { font: 500 .62rem var(--fonte); text-transform: uppercase; letter-spacing: .12em; color: #d9ccb4; }
+.hud-arma {
+    position: absolute; right: 2.5%; bottom: 4%; display: grid; justify-items: end; gap: 2px;
+    padding: .4rem .7rem; color: #fff;
+    background: rgba(10, 8, 6, .62); border: 1px solid rgba(255, 255, 255, .18); border-radius: 8px;
+}
+.hud-arma b { font-size: clamp(.72rem, 1.5vw, 1rem); letter-spacing: .06em; }
+.hud-municao { font-size: clamp(1rem, 2.4vw, 1.6rem); font-variant-numeric: tabular-nums; }
+.hud-municao.vazio { color: #ff7b6b; }
+.hud-recarga { width: 100%; height: 4px; background: rgba(255, 255, 255, .15); border-radius: 2px; overflow: hidden; }
+.hud-recarga i { display: block; height: 100%; width: 0; background: var(--lampiao); }
+.hud-aviso {
+    position: absolute; left: 50%; top: 16%; transform: translateX(-50%);
+    font-size: clamp(.8rem, 1.8vw, 1.2rem); color: #ffe9b0; text-shadow: 0 2px 6px #000;
+    letter-spacing: .08em; text-transform: uppercase; opacity: 0; transition: opacity .15s;
+}
+.hud-aviso.visivel { opacity: 1; }
+.hud-zoom {
+    position: absolute; left: 2.5%; bottom: 4%; pointer-events: auto; cursor: pointer;
+    padding: .35rem .7rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, .3);
+    background: rgba(10, 8, 6, .62); color: #fff; font: 600 .8rem var(--fonte);
+}
+.hud-zoom.ativo { background: var(--lampiao); color: #1a1410; }
+
+/* telas de início e de resultado */
+.jogo-tela {
+    position: absolute; inset: 0; z-index: 30; display: grid; place-items: center; padding: 3%;
+    background: rgba(8, 6, 4, .72); backdrop-filter: blur(2px);
+}
+.jogo-tela[hidden] { display: none; }
+.jogo-cartao {
+    width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 1.2rem 1.4rem; text-align: center;
+    background: linear-gradient(#2a2219, #1a1510); border: 2px solid var(--lampiao-escuro); border-radius: 10px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .6);
+}
+.jogo-cartao h2 { margin: 0 0 .6rem; color: var(--lampiao); font-size: clamp(1rem, 2.4vw, 1.5rem); }
+.regras { text-align: left; margin: 0 0 .75rem; padding-left: 1.1rem; font-size: clamp(.75rem, 1.4vw, .92rem); }
+.regras li + li { margin-top: .3rem; }
+.controles { display: flex; flex-wrap: wrap; gap: .3rem .9rem; justify-content: center; margin: 0 0 1rem; font-size: .78rem; color: var(--texto-2); }
+kbd {
+    font: 600 .72rem var(--fonte); padding: .05rem .35rem; border: 1px solid var(--borda); border-bottom-width: 2px;
+    border-radius: 4px; background: #0b0907; color: var(--texto);
+}
+.btn.grande { padding: .75rem 1.6rem; font-size: 1rem; }
+.texto-perigo { color: #ff8f80; }
+.acoes.centro { justify-content: center; margin-top: 1rem; }
+.resultado .nota {
+    width: 1.6em; height: 1.6em; display: grid; place-items: center; margin: .2rem auto .8rem;
+    font: 600 clamp(2.4rem, 7vw, 4.2rem)/1 var(--fonte-titulo);
+    border-radius: 50%; border: 4px solid currentColor; background: rgba(0, 0, 0, .35); color: #8c8c8c;
+}
+.resultado .nota-s { color: #e0a63a; }
+.resultado .nota-a { color: #cfd6dc; }
+.resultado .nota-b { color: #b98d5c; }
+.resultado .nota-derrota { color: #e5483c; }
+.placar { display: grid; grid-template-columns: 1fr auto; gap: .3rem 1.2rem; margin: 0 auto; max-width: 340px; text-align: left; font-size: .92rem; }
+.placar dt { color: var(--texto-2); }
+.placar dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.jogo-tela.derrota .jogo-cartao { border-color: #8a2a24; }
+
+/* ---------- barra de armas do jogo ---------- */
+.jogo-armas { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .6rem; margin-bottom: .75rem; }
+.arma-card {
+    position: relative; display: grid; gap: .35rem; text-align: left; cursor: pointer;
+    padding: .7rem .8rem; border-radius: 8px; border: 1px solid var(--borda);
+    background: var(--fundo-2); color: var(--texto); font: inherit;
+}
+.arma-card:hover { border-color: var(--lampiao-escuro); }
+.arma-card.ativa { border-color: var(--lampiao); background: #241c13; box-shadow: 0 0 0 1px var(--lampiao), 0 0 18px rgba(224, 166, 58, .25); }
+.arma-tecla {
+    position: absolute; top: .5rem; right: .6rem; width: 1.5rem; height: 1.5rem; display: grid; place-items: center;
+    font: 600 .75rem var(--fonte-titulo); border-radius: 4px; border: 1px solid var(--borda); color: var(--texto-2);
+}
+.arma-card.ativa .arma-tecla { background: var(--lampiao); color: #1a1410; border-color: var(--lampiao); }
+.arma-icone svg { width: 72px; height: 27px; fill: #c9b48f; display: block; }
+.arma-card.ativa .arma-icone svg { fill: var(--lampiao); }
+.arma-nome { font: 600 .95rem var(--fonte-titulo); letter-spacing: .04em; text-transform: uppercase; padding-right: 1.8rem; }
+.arma-nome small { display: block; font: 500 .72rem var(--fonte); color: var(--texto-2); text-transform: none; letter-spacing: 0; }
+.arma-diferencial { font-size: .76rem; color: #d6c9ae; line-height: 1.35; }
+.arma-stats { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem .6rem; }
+.stat small { display: block; font-size: .64rem; color: var(--texto-2); text-transform: uppercase; letter-spacing: .06em; }
+.stat i { display: block; height: 5px; border-radius: 3px; background: linear-gradient(90deg, var(--lampiao) var(--v), rgba(255, 255, 255, .1) var(--v)); }
+
+/* ---------- cadastro de armas ---------- */
+.grade-armas { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.cartao-arma { display: flex; flex-direction: column; gap: .6rem; padding: 1rem; border-radius: 8px; background: var(--fundo-2); border: 1px solid var(--borda); }
+.cartao-arma header { display: flex; gap: .7rem; align-items: center; }
+.cartao-arma h2 { margin: 0; font-size: 1.05rem; }
+.cartao-arma .arma-tecla { position: static; flex: none; }
+.cartao-arma .diferencial { margin: 0; font-size: .85rem; color: #d6c9ae; flex: 1; }
+.cartao-arma .stats { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: .2rem .6rem; margin: 0; font-size: .82rem; }
+.cartao-arma .stats dt { color: var(--texto-2); }
+.cartao-arma .stats dd { margin: 0; font-weight: 600; }
+.dica-armas { margin-top: 1rem; }
+.comportamento-tipo { margin: -.5rem 0 0; }
+.comportamento-tipo:empty { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ambiente::before, .ambiente::after, .alvo .chama, .alvo .brilho { animation: none !important; }
+    .jogo-palco.tremor { animation: none; }
+}

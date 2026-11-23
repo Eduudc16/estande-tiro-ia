@@ -20,14 +20,17 @@ public final class PromptImagem {
     private PromptImagem() {
     }
 
-    /** Monta a base do prompt (definida na atividade) trocando [TIPO] e [ESTILO]. */
+    /**
+     * Monta a base do prompt trocando [TIPO] e [ESTILO]. O ambiente ao redor (paredes, teto, piso, balcão e fundo)
+     * vem do tipo do estande; antes era sempre o mesmo galpão de madeira e só o painel do fundo mudava.
+     */
     public static String base(TipoEstande tipo, EstiloVisual estilo) {
         return "Cenário de fundo 2D para minigame de estande de tiro, visão em primeira pessoa olhando para o "
-                + "fundo do estande. Galpão de madeira rústico e escuro, iluminação de lampiões amarelados, clima de "
-                + "terror e suspense, ambientação " + tipo.getAmbientacao() + ". Balcão de madeira em primeiro plano "
-                + "na parte inferior. Área central VAZIA, com fundo de madeira e alguns trilhos/suportes, onde os "
-                + "alvos vão aparecer. Sem personagens, sem pessoas, sem alvos, sem armas, sem texto, sem logotipos. "
-                + "Estilo " + estilo.getTermoPrompt() + ", proporção 16:9.";
+                + "fundo do estande. Ambientação " + tipo.getAmbientacao() + ": " + tipo.getAmbiente()
+                + ", clima de terror e suspense. " + tipo.getBalcao() + " em primeiro plano na parte inferior. "
+                + "Área central VAZIA, com " + tipo.getPiso() + " e alguns trilhos/suportes, onde os alvos vão "
+                + "aparecer; " + tipo.getFundo() + ". Sem personagens, sem pessoas, sem alvos, sem armas, sem texto, "
+                + "sem logotipos. Estilo " + estilo.getTermoPrompt() + ", proporção 16:9.";
     }
 
     /** Se a IA tiver omitido alguma exigência, acrescenta as regras obrigatórias no final. */

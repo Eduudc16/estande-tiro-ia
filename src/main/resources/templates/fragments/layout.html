@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/estilo.css}">
+    <link rel="stylesheet" th:href="@{/css/jogo.css}">
     <script th:src="@{/js/app.js}" defer></script>
 </head>
 <body>
@@ -20,6 +21,7 @@
     <nav class="menu" aria-label="Principal">
         <a th:href="@{/estandes}" th:classappend="${ativo == 'estandes'} ? 'ativo'">Estandes</a>
         <a th:href="@{/estandes/novo}" th:classappend="${ativo == 'novo'} ? 'ativo'">Novo estande</a>
+        <a th:href="@{/armas}" th:classappend="${ativo == 'armas'} ? 'ativo'">Armas</a>
         <a th:href="@{/logs}" th:classappend="${ativo == 'logs'} ? 'ativo'">Log de imagens</a>
     </nav>
     <div class="status-ia" th:if="${statusIa != null}">

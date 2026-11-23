@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Jogar · ' + ${estande.nome})}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('estandes')}"></header>
+
+<main class="conteudo largo" th:classappend="'tema-' + ${estande.tipo.cssTema}">
+    <nav class="trilha" aria-label="Trilha">
+        <a th:href="@{/estandes}">Estandes</a> /
+        <a th:href="@{/estandes/{id}(id=${estande.id})}" th:text="${estande.nome}">Nome</a> / <span>Jogar</span>
+    </nav>
+    <div class="cabecalho">
+        <div>
+            <h1 th:text="${estande.nome}">Nome</h1>
+            <p class="meta">
+                <span class="etiqueta" th:text="${estande.tipo.rotulo}">Tipo</span>
+                <span class="sub" th:text="'Inimigos: ' + ${estande.tipo.inimigos}">Inimigos</span>
+            </p>
+        </div>
+        <div class="acoes">
+            <button class="btn pequeno fantasma" type="button" data-som>🔊 Som ligado</button>
+            <a class="btn" th:href="@{/estandes/{id}(id=${estande.id})}">Sair do jogo</a>
+        </div>
+    </div>
+
+    <div class="jogo-palco" data-jogo-palco>
+        <div class="jogo-mundo">
+            <img th:if="${estande.temImagem()}" th:src="@{${estande.caminhoImagem}}" alt="" draggable="false">
+            <div th:unless="${estande.temImagem()}" class="sem-cenario grande">
+                <span>Sem cenário</span><small>Gere o cenário com IA para jogar com a imagem de fundo</small>
+            </div>
+            <div class="jogo-alvos"></div>
+            <div class="jogo-efeitos"></div>
+        </div>
+        <div class="ambiente" aria-hidden="true"></div>
+        <div class="jogo-luneta" aria-hidden="true"></div>
+        <div class="jogo-mira" hidden aria-hidden="true"></div>
+
+        <div class="jogo-hud">
+            <span class="hud-tempo" data-hud-tempo>60.00</span>
+            <span class="hud-pontos"><small>pontos</small> <b data-hud-pontos>0</b></span>
+            <span class="hud-arma">
+                <b data-hud-arma>—</b>
+                <span class="hud-municao" data-hud-municao>0 / 0</span>
+                <span class="hud-recarga"><i data-hud-recarga></i></span>
+            </span>
+            <span class="hud-aviso" data-hud-aviso></span>
+            <button type="button" class="hud-zoom" data-zoom hidden>🔍 Mira</button>
+        </div>
+
+        <div class="jogo-tela" data-tela-inicio>
+            <div class="jogo-cartao">
+                <h2 th:text="${estande.nome}">Estande</h2>
+                <ul class="regras">
+                    <li>Derrube os <b th:text="${#strings.toLowerCase(estande.tipo.inimigos)}">inimigos</b> que surgem
+                        nos trilhos. Os maiores aguentam vários tiros; escudos bloqueiam tiros comuns.</li>
+                    <li><b class="texto-perigo">Não acerte a refém</b> (placa “REFÉM”): se acertar, você perde.
+                        Se ela sair ilesa, você ganha +200.</li>
+                    <li>Tiro na cabeça dobra o dano e vale mais pontos.</li>
+                </ul>
+                <p class="controles">
+                    <span>Clique: atirar</span>
+                    <span><kbd>1</kbd>–<kbd th:text="${#lists.size(armasJogo) > 9 ? 9 : #lists.size(armasJogo)}">6</kbd> ou rolagem: trocar arma</span>
+                    <span><kbd>R</kbd>: recarregar</span>
+                    <span>Botão direito ou <kbd>Shift</kbd>: zoom do rifle</span>
+                </p>
+                <button class="btn primario grande" type="button" data-comecar
+                        th:disabled="${#lists.isEmpty(armasJogo)}">▶ Começar (60 s)</button>
+                <p class="texto-perigo" th:if="${#lists.isEmpty(armasJogo)}">
+                    Nenhuma arma cadastrada. <a class="link" th:href="@{/armas/nova}">Cadastre uma arma</a> para jogar.
+                </p>
+            </div>
+        </div>
+
+        <div class="jogo-tela" data-tela-fim hidden>
+            <div class="jogo-cartao resultado">
+                <h2 data-fim-titulo>Tempo esgotado!</h2>
+                <div class="nota" data-fim-nota>S</div>
+                <dl class="placar">
+                    <dt>Pontos</dt><dd data-fim-pontos>0</dd>
+                    <dt>Inimigos derrubados</dt><dd data-fim-abatidos>0</dd>
+                    <dt>Precisão</dt><dd data-fim-precisao>0%</dd>
+                    <dt>Tiros na cabeça</dt><dd data-fim-cabeca>0</dd>
+                    <dt>Reféns salvas</dt><dd data-fim-refens>0</dd>
+                    <dt>Recorde neste estande</dt><dd data-fim-recorde>0</dd>
+                </dl>
+                <div class="acoes centro">
+                    <button class="btn primario" type="button" data-comecar>↻ Jogar de novo</button>
+                    <a class="btn" th:href="@{/estandes/{id}(id=${estande.id})}">Voltar ao estande</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>Armas <small>clique para escolher ou use as teclas numéricas</small></h2>
+    <div class="jogo-armas" data-armas></div>
+    <p class="sub">Para mudar os números das armas ou criar outras, use a tela <a class="link" th:href="@{/armas}">Armas</a>.</p>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+
+<script th:inline="javascript">
+    window.JOGO = {
+        estande: { id: [[${estande.id}]], tipo: [[${estande.tipo.name()}]] },
+        armas: [[${armasJogo}]]
+    };
+</script>
+<script th:src="@{/js/alvos.js}"></script>
+<script th:src="@{/js/jogo.js}"></script>
+</body>
+</html>

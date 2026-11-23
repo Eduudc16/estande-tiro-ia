@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${arma == null} ? 'Nova arma' : 'Editar arma')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('armas')}"></header>
+
+<main class="conteudo estreito">
+    <nav class="trilha" aria-label="Trilha">
+        <a th:href="@{/armas}">Armas</a> / <span th:text="${arma == null} ? 'Nova' : ${arma.nome}">Nova</span>
+    </nav>
+    <h1 th:text="${arma == null} ? 'Nova arma' : 'Editar arma'">Nova arma</h1>
+
+    <form class="formulario" method="post" th:object="${form}" novalidate
+          th:action="${arma == null} ? @{/armas} : @{/armas/{id}(id=${arma.id})}">
+
+        <div class="grupo">
+            <label>Nome
+                <input type="text" th:field="*{nome}" maxlength="60" required placeholder="Ex.: Pistola 9mm">
+                <span class="erro-campo" th:errors="*{nome}"></span>
+            </label>
+            <label>Tipo (define o diferencial)
+                <select th:field="*{tipo}" required data-tipo-arma>
+                    <option value="">Escolha…</option>
+                    <option th:each="t : ${tipos}" th:value="${t}" th:text="${t.rotulo}"
+                            th:attr="data-comportamento=${t.comportamento}">Tipo</option>
+                </select>
+                <span class="erro-campo" th:errors="*{tipo}"></span>
+            </label>
+        </div>
+        <p class="dica comportamento-tipo" data-comportamento-tipo></p>
+
+        <div class="grupo">
+            <label>Dano por tiro (1–10)
+                <input type="number" th:field="*{dano}" min="1" max="10" required>
+                <span class="erro-campo" th:errors="*{dano}"></span>
+            </label>
+            <label>Balas no pente (1–100)
+                <input type="number" th:field="*{capacidade}" min="1" max="100" required>
+                <span class="erro-campo" th:errors="*{capacidade}"></span>
+            </label>
+        </div>
+        <div class="grupo">
+            <label>Cadência: ms entre tiros (50–3000)
+                <input type="number" th:field="*{cadenciaMs}" min="50" max="3000" step="10" required>
+                <span class="erro-campo" th:errors="*{cadenciaMs}"></span>
+            </label>
+            <label>Recarga em ms (300–6000)
+                <input type="number" th:field="*{recargaMs}" min="300" max="6000" step="100" required>
+                <span class="erro-campo" th:errors="*{recargaMs}"></span>
+            </label>
+            <label>Ordem (tecla)
+                <input type="number" th:field="*{ordem}" min="0" max="99" required>
+                <span class="erro-campo" th:errors="*{ordem}"></span>
+            </label>
+        </div>
+        <label>Diferencial (texto mostrado no jogo; vazio = texto padrão do tipo)
+            <textarea th:field="*{diferencial}" rows="2" maxlength="300"></textarea>
+            <span class="erro-campo" th:errors="*{diferencial}"></span>
+        </label>
+        <p class="dica">Referência: inimigo comum aguenta 1 de dano e o forte aguenta 4. Tiro na cabeça dobra o dano.</p>
+
+        <div class="acoes">
+            <button class="btn primario" type="submit">Salvar</button>
+            <a class="btn fantasma" th:href="@{/armas}">Cancelar</a>
+        </div>
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+</body>
+</html>

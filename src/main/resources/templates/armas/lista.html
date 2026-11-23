@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Armas')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: menu('armas')}"></header>
+
+<main class="conteudo">
+    <div th:replace="~{fragments/layout :: alertas}"></div>
+
+    <div class="cabecalho">
+        <div>
+            <h1>Armas do minigame</h1>
+            <p class="sub">Todas ficam disponíveis em todos os estandes. O tipo define o diferencial; os números você ajusta aqui.</p>
+        </div>
+        <a class="btn primario" th:href="@{/armas/nova}">+ Nova arma</a>
+    </div>
+
+    <div class="grade-armas" th:unless="${#lists.isEmpty(armas)}">
+        <article class="cartao-arma" th:each="a, it : ${armas}">
+            <header>
+                <span class="arma-tecla" th:text="${it.count <= 9} ? ${it.count} : '–'">1</span>
+                <div>
+                    <h2 th:text="${a.nome}">Pistola</h2>
+                    <p class="sub" th:text="${a.tipo.rotulo}">Pistola</p>
+                </div>
+            </header>
+            <p class="diferencial" th:text="${a.diferencial} ?: ${a.tipo.comportamento}">Diferencial</p>
+            <dl class="stats">
+                <dt>Dano</dt><dd th:text="${a.dano}">1</dd>
+                <dt>Pente</dt><dd th:text="${a.capacidade} + ' balas'">12</dd>
+                <dt>Cadência</dt><dd th:text="${a.cadenciaMs} + ' ms'">220 ms</dd>
+                <dt>Recarga</dt><dd th:text="${#numbers.formatDecimal(a.recargaMs / 1000.0, 1, 'POINT', 1, 'COMMA')} + ' s'">1,1 s</dd>
+            </dl>
+            <div class="acoes">
+                <a class="btn pequeno" th:href="@{/armas/{id}/editar(id=${a.id})}">Editar</a>
+                <form class="inline" th:action="@{/armas/{id}/excluir(id=${a.id})}" method="post"
+                      th:data-confirmar="'Excluir a arma “' + ${a.nome} + '”?'">
+                    <button class="btn pequeno perigo" type="submit">Excluir</button>
+                </form>
+            </div>
+        </article>
+    </div>
+    <p class="vazio" th:if="${#lists.isEmpty(armas)}">
+        Nenhuma arma cadastrada. <a class="link" th:href="@{/armas/nova}">Cadastre a primeira</a> para poder jogar.
+    </p>
+    <p class="sub dica-armas">As teclas 1 a 9 do jogo seguem a ordem desta lista (campo “Ordem”).</p>
+</main>
+
+<footer th:replace="~{fragments/layout :: rodape}"></footer>
+</body>
+</html>

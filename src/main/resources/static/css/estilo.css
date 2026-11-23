@@ -205,7 +205,6 @@ body.ocupado { cursor: progress; }
     box-shadow: 0 0 0 1px var(--lampiao-escuro), 0 14px 40px rgba(0, 0, 0, .6);
 }
 .palco > img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.palco.jogando { cursor: crosshair; }
 .palco-rodape { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin: .7rem 0 .4rem; }
 
 .passos {
@@ -237,46 +236,6 @@ body.ocupado { cursor: progress; }
     font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .8rem; line-height: 1.6;
     color: #e2d6bd; background: #0b0907; border: 1px solid var(--borda); border-radius: var(--raio); padding: .75rem;
 }
-
-/* ---------- prévia dos alvos ---------- */
-.camada-alvos { position: absolute; inset: 0; pointer-events: none; perspective: 700px; }
-.hud { position: absolute; inset: 0; pointer-events: none; font-family: var(--fonte-titulo); }
-.hud-tempo {
-    position: absolute; top: 4%; left: 50%; transform: translateX(-50%);
-    padding: .2rem .9rem; font-size: clamp(.9rem, 2.2vw, 1.4rem); color: #f3ead6;
-    background: linear-gradient(#6b6258, #3f3832); border: 2px solid #1d1915; border-radius: 4px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, .6); font-variant-numeric: tabular-nums;
-}
-.hud-pontos {
-    position: absolute; top: 4%; right: 3%; color: #fff; font-size: clamp(.9rem, 2.2vw, 1.4rem);
-    text-shadow: 0 2px 6px #000;
-}
-.hud-pontos small { font: 500 .65rem var(--fonte); text-transform: uppercase; letter-spacing: .12em; color: #d9ccb4; }
-.hud-fim {
-    position: absolute; inset: 0; display: grid; place-content: center; text-align: center;
-    background: rgba(0, 0, 0, .55); color: var(--lampiao); font-size: clamp(1.2rem, 4vw, 2.4rem);
-    text-transform: uppercase; letter-spacing: .08em; animation: aparece .3s ease-out;
-}
-.hud-fim small { color: var(--texto); font: 500 .9rem var(--fonte); letter-spacing: 0; text-transform: none; }
-.alvo {
-    position: absolute; width: 7.5%; aspect-ratio: 64 / 120; padding: 0; border: 0; background: none;
-    cursor: crosshair; pointer-events: auto;
-    transform: translateX(-50%) scaleY(0); transform-origin: 50% 100%;
-    animation: alvo-sobe .18s ease-out forwards;
-}
-.alvo svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .65)); }
-.alvo.saindo { animation: alvo-desce .2s ease-in forwards; pointer-events: none; }
-.alvo.acertado { animation: alvo-cai .35s ease-in forwards; pointer-events: none; }
-.pontos-voando {
-    position: absolute; transform: translateX(-50%); pointer-events: none;
-    color: #fff; font: 600 clamp(.8rem, 1.8vw, 1.2rem) var(--fonte-titulo); text-shadow: 0 2px 4px #000;
-    animation: sobe-some .8s ease-out forwards;
-}
-@keyframes alvo-sobe { to { transform: translateX(-50%) scaleY(1); } }
-@keyframes alvo-desce { from { transform: translateX(-50%) scaleY(1); } to { transform: translateX(-50%) scaleY(0); } }
-@keyframes alvo-cai { from { transform: translateX(-50%) rotateX(0); } to { transform: translateX(-50%) rotateX(85deg); opacity: .25; } }
-@keyframes sobe-some { to { transform: translate(-50%, -40px); opacity: 0; } }
-@keyframes aparece { from { opacity: 0; } }
 
 /* ---------- formulário ---------- */
 .formulario {
@@ -341,7 +300,6 @@ details.opcional label + label { margin-top: 1rem; }
     .conteudo { padding: 1.25rem 1rem 2rem; }
     h1 { font-size: 1.55rem; }
     .formulario { padding: 1rem; }
-    .alvo { width: 10%; }
 }
 @media (prefers-reduced-motion: reduce) {
     .card-estande, .btn { transition: none; }

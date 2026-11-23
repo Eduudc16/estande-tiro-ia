@@ -4,7 +4,7 @@
 <body>
 <header th:replace="~{fragments/layout :: menu('estandes')}"></header>
 
-<main class="conteudo">
+<main class="conteudo" th:classappend="'tema-' + ${estande.tipo.cssTema}">
     <div th:replace="~{fragments/layout :: alertas}"></div>
 
     <nav class="trilha" aria-label="Trilha"><a th:href="@{/estandes}">Estandes</a> / <span th:text="${estande.nome}">Nome</span></nav>
@@ -28,20 +28,20 @@
 
     <div class="detalhe-layout">
         <section class="palco-wrap" aria-label="Cenário">
-            <div class="palco" data-palco>
+            <div class="palco">
                 <img th:if="${estande.temImagem()}" th:src="@{${estande.caminhoImagem}}" alt="Cenário de fundo gerado por IA">
                 <div th:unless="${estande.temImagem()}" class="sem-cenario grande">
                     <span>Sem cenário ainda</span><small>Siga os 3 passos de “Gerar com IA”</small>
                 </div>
-                <div class="camada-alvos" data-alvos></div>
-                <div class="hud" data-hud hidden>
-                    <span class="hud-tempo" data-tempo>30.00</span>
-                    <span class="hud-pontos"><small>pontos</small> <b data-pontos>0</b></span>
-                </div>
+                <div class="ambiente" aria-hidden="true"></div>
+                <a class="botao-jogar" th:href="@{/estandes/{id}/jogar(id=${estande.id})}">▶ Jogar</a>
             </div>
             <div class="palco-rodape">
-                <button class="btn pequeno" type="button" data-testar-alvos>▶ Testar alvos sobre o cenário</button>
-                <small class="sub">Prévia da parte dinâmica: alvos surgem na área central e somem. Clique para acertar.</small>
+                <a class="btn primario" th:href="@{/estandes/{id}/jogar(id=${estande.id})}">▶ Jogar neste estande</a>
+                <small class="sub">
+                    Inimigos: <b th:text="${estande.tipo.inimigos}">Aldeões</b> · a refém não pode ser atingida ·
+                    <a class="link" th:href="@{/armas}">armas</a>
+                </small>
             </div>
             <p class="sub" th:if="${estande.temImagem()}">Arquivo: <code th:text="'assets' + ${#strings.substringAfter(estande.caminhoImagem, '/assets')}">assets/cenarios/1.png</code></p>
         </section>

@@ -18,12 +18,12 @@ public class IaTextoService {
 
     static final String SISTEMA_DESCRICAO = """
             Você é roteirista de jogos de terror e suspense. Escreva a descrição de um ESTANDE DE TIRO de um \
-            minigame: um galpão de madeira rústico onde alvos de madeira surgem e somem diante do jogador.
+            minigame, montado dentro do ambiente do tema (por exemplo: um celeiro, o salão de um castelo, um \
+            bunker, a galeria de uma mina), onde alvos surgem e somem diante do jogador.
             Regras:
             - Português do Brasil, um único parágrafo de 3 a 5 frases (no máximo 90 palavras).
-            - Clima de terror e suspense: luz fraca de lampiões, madeira rangendo, sombras, sons distantes.
-            - Descreva o ambiente de acordo com o tipo do estande: materiais, iluminação, objetos e o painel \
-            pintado no fundo.
+            - Clima de terror e suspense: luz fraca, sombras, sons distantes.
+            - O AMBIENTE INTEIRO combina com o tema: paredes, teto, piso, iluminação, objetos e o fundo do estande.
             - Não cite nomes de jogos, franquias, empresas ou personagens.
             - Responda só com a descrição, sem título, sem markdown e sem aspas.""";
 
@@ -37,11 +37,10 @@ public class IaTextoService {
             BASE: [BASE]
 
             Como melhorar a base:
-            - acrescente detalhes visuais concretos tirados da descrição: materiais, cores, iluminação, objetos e \
-            o painel pintado no fundo do estande;
-            - referências visuais de um estande de tiro clássico: teto com vigas de madeira, lampiões pendurados \
-            em suportes de ferro nas paredes laterais, painel ou mural pintado no fundo retratando o tema, piso de \
-            tábuas com trilhos metálicos paralelos e suportes vazios por onde os alvos deslizam;
+            - o ambiente INTEIRO precisa combinar com o tema: paredes, teto, piso, iluminação, decoração e o que \
+            aparece ao fundo. Não transforme o lugar num galpão de madeira se o tema for outro;
+            - acrescente detalhes visuais concretos tirados da descrição: materiais, cores, iluminação e objetos;
+            - mantenha a área central livre, com trilhos paralelos e suportes vazios por onde os alvos deslizam;
             - frases descritivas e objetivas; nada de regras de jogo, pontuação ou narrativa.
             Proibido: nomes de jogos, franquias, empresas, personagens ou pessoas reais; figuras humanas ou criaturas.
             Responda SOMENTE com o prompt final, em português, em um único parágrafo, sem markdown e sem aspas.""";
@@ -63,11 +62,11 @@ public class IaTextoService {
         String usuario = """
                 Nome do estande: %s
                 Tipo de ambientação: %s (%s)
-                Detalhes típicos deste tipo: %s
+                Ambiente deste tipo: %s
                 Estilo visual: %s
                 Escreva a descrição do cenário.""".formatted(
                 estande.getNome(), estande.getTipo().getRotulo(), estande.getTipo().getAmbientacao(),
-                estande.getTipo().getDetalhesVisuais(), estande.getEstiloVisual().getRotulo());
+                ambienteCompleto(estande), estande.getEstiloVisual().getRotulo());
         return limitar(limpar(chamar(SISTEMA_DESCRICAO, usuario)), 2000);
     }
 
@@ -79,14 +78,22 @@ public class IaTextoService {
         String base = PromptImagem.base(estande.getTipo(), estande.getEstiloVisual());
         String usuario = """
                 Tipo de ambientação: %s
-                Detalhes típicos deste tipo: %s
+                Ambiente deste tipo: %s
                 Estilo visual: %s
                 Descrição do cenário: %s""".formatted(
-                estande.getTipo().getAmbientacao(), estande.getTipo().getDetalhesVisuais(),
+                estande.getTipo().getAmbientacao(), ambienteCompleto(estande),
                 estande.getEstiloVisual().getTermoPrompt(), estande.getDescricaoGeradaPorIA());
         String prompt = limpar(chamar(SISTEMA_PROMPT.replace("[BASE]", base), usuario));
         prompt = FiltroTermosProibidos.limpar(prompt).texto();
         return limitar(PromptImagem.garantirRegras(prompt), 4000);
+    }
+
+    /** Paredes/teto, balcão, piso e fundo do tipo, numa linha só. */
+    private static String ambienteCompleto(EstandeTiro estande) {
+        var t = estande.getTipo();
+        return t.getAmbiente() + "; " + t.getBalcao().toLowerCase(java.util.Locale.ROOT) + " em primeiro plano; "
+                + t.getPiso() + "; "
+                + t.getFundo();
     }
 
     private String chamar(String sistema, String usuario) {

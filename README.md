@@ -5,14 +5,16 @@ minigames inspirados no estande de tiro do Mercador (*Resident Evil 4*) e usa IA
 criar a **descrição**, o **prompt de imagem** e a **imagem de fundo** de cada estande.
 
 Cada minigame tem uma **imagem de fundo fixa** (o cenário do estande). A parte dinâmica são os **alvos**, que aparecem
-e somem por cima dela. A tela do estande tem uma prévia disso: o botão *Testar alvos* faz alvos de madeira surgirem
-na área central do cenário.
+e somem por cima dela. O botão **▶ Jogar** abre o minigame:
+- Os inimigos mudam conforme o tipo de estande.
+- Há uma refém que não pode ser atingida.
+- Há 6 armas, cada uma com o seu diferencial (veja [Minigame](#minigame)).
 
 ## Requisitos da atividade × onde estão
 
 | Requisito | Onde |
 |---|---|
-| Integração com banco de dados | Spring Data JPA + H2 em arquivo (`./data/estandes.mv.db`), tabelas `estande_tiro` e `log_geracao_imagem` |
+| Integração com banco de dados | Spring Data JPA + H2 em arquivo (`./data/estandes.mv.db`), tabelas `estande_tiro`, `log_geracao_imagem` e `arma` |
 | Interface web | Thymeleaf + CSS (`src/main/resources/templates`, `static/css/estilo.css`) |
 | Integração com GenAI via Spring AI | `ChatClient` do Spring AI com o starter `spring-ai-starter-model-google-genai` (`config/GenAiConfig.java`) |
 | Funcionalidades que usam GenAI | Gerar descrição e gerar prompt de imagem (texto); gerar cenário (imagem) |
@@ -58,13 +60,14 @@ MAX_IMAGE_GENERATIONS=5
 (Linux/macOS/Git Bash: `./mvnw spring-boot:run`.)
 
 **4. Abra <http://localhost:8080>.** Na primeira execução são criados 4 estandes de exemplo (vila, castelo, ilha e
-mina), ainda sem textos nem imagens. Se a porta 8080 estiver ocupada, rode antes `$env:PORT=8081` (PowerShell).
+mina), ainda sem textos nem imagens, e as 6 armas do minigame. Se a porta 8080 estiver ocupada, rode antes
+`$env:PORT=8081` (PowerShell).
 
 **Como o `.env` é carregado:** a linha `spring.config.import=optional:file:.env[.properties]` do
 `application.properties` faz o Spring Boot ler o `.env` como arquivo de propriedades, sem nenhuma dependência extra.
 Variáveis de ambiente do sistema, se existirem, têm prioridade sobre o `.env`.
 
-**Testes:** `.\mvnw.cmd test` roda 22 testes. Neles a IA é simulada (mocks), então eles não usam as chaves nem gastam
+**Testes:** `.\mvnw.cmd test` roda 26 testes. Neles a IA é simulada (mocks), então eles não usam as chaves nem gastam
 cota.
 
 ## As duas chaves de API
@@ -103,19 +106,66 @@ Na tela do estande, em **Gerar com IA**:
    `assets/cenarios/<id>.png` (servida em `/assets/cenarios/<id>.png`) e guarda o caminho no banco.
    O botão **Regenerar…** só aparece quando o estande já tem imagem e sempre passa por uma tela de confirmação.
 
-Base do prompt de imagem (os trechos `[TIPO]` e `[ESTILO]` são trocados pelo tipo e estilo do estande):
+Base do prompt de imagem. Os trechos entre colchetes vêm do tipo e do estilo do estande, em
+[`TipoEstande`](src/main/java/com/faculdade/estandetiro/model/entity/TipoEstande.java):
 
 > Cenário de fundo 2D para minigame de estande de tiro, visão em primeira pessoa olhando para o fundo do estande.
-> Galpão de madeira rústico e escuro, iluminação de lampiões amarelados, clima de terror e suspense, ambientação
-> [TIPO]. Balcão de madeira em primeiro plano na parte inferior. Área central VAZIA, com fundo de madeira e alguns
-> trilhos/suportes, onde os alvos vão aparecer. Sem personagens, sem pessoas, sem alvos, sem armas, sem texto, sem
-> logotipos. Estilo [ESTILO], proporção 16:9.
+> Ambientação [TIPO]: [AMBIENTE], clima de terror e suspense. [BALCÃO] em primeiro plano na parte inferior. Área
+> central VAZIA, com [PISO] e alguns trilhos/suportes, onde os alvos vão aparecer; [FUNDO]. Sem personagens, sem
+> pessoas, sem alvos, sem armas, sem texto, sem logotipos. Estilo [ESTILO], proporção 16:9.
 
-As referências visuais usadas para enriquecer o prompt vieram de capturas de estandes de tiro clássicos: teto com
-vigas de madeira, lampiões nas paredes laterais, painel pintado ao fundo com o tema e trilhos paralelos no piso.
-Elas entram no prompt só como descrição visual; as capturas não fazem parte do projeto. **O nome "Resident Evil" e
-nomes de personagens nunca vão no prompt de imagem.** Mesmo que alguém os escreva à mão no formulário, eles são
-removidos antes do envio.
+**O cenário inteiro muda com o tipo, não só o fundo.** A base original da atividade fixava "galpão de madeira rústico"
+para todos os tipos, então só o painel pintado ao fundo mudava. Agora cada tipo define o próprio ambiente:
+
+| Tipo | Ambiente ao redor | Balcão | Fundo |
+|---|---|---|---|
+| Vila rural | celeiro com feno, ferramentas e lampiões | madeira gasta | a vila pelas portas do celeiro |
+| Castelo | salão gótico de pedra com arcos, tapeçarias e candelabros | pedra com tampo entalhado | vitral com relâmpagos e portão de ferro |
+| Ilha / base militar | bunker de concreto com sacos de areia, holofotes e luz de emergência | chapa de aço com faixas de alerta | parede marcada de tiros e porta blindada |
+| Mina | galeria na rocha com vigas, dinamite e lanternas | tábuas sobre caixotes | boca de túnel com vagonete |
+| Porto / navio | armazém do cais com redes, barris e lanternas | tábuas de convés sobre barris | navios antigos no mar revolto |
+
+As telas também acompanham o tema: a moldura do cenário e um efeito de ambiente mudam em cada tipo (névoa na vila,
+velas e relâmpagos no castelo, holofote e luz de emergência na base, poeira na mina, lanterna balançando no porto).
+
+**O nome "Resident Evil" e nomes de personagens nunca vão no prompt de imagem.** Mesmo que alguém os escreva à mão no
+formulário, eles são removidos antes do envio.
+
+## Minigame
+
+Na tela do estande, **▶ Jogar** abre o estande de tiro. A partida dura 60 segundos.
+
+- **Inimigos:** surgem em 3 trilhos (perto, meio e longe), parados ou deslizando de um lado a outro. Cada tipo de
+  estande tem o seu grupo: aldeões (vila), cultistas encapuzados (castelo), soldados mascarados (base militar),
+  mineiros possuídos (mina) e piratas (porto).
+  - Os comuns caem com 1 de dano e valem 100.
+  - Os ágeis são mais rápidos e valem 150.
+  - Os fortes têm 4 de vida (barra acima da cabeça) e valem 300; alguns carregam **escudo**.
+- **Refém:** é a moça com a placa "REFÉM" e o contorno dourado. Ela aparece às vezes sozinha e às vezes colada num
+  inimigo. **Se você acertá-la, perde na hora.** Se ela sair ilesa, você ganha +200.
+- **Tiro na cabeça:** dobra o dano e vale 50% a mais. Com o rifle, triplica o dano e dobra os pontos.
+- **Resultado:** no fim aparecem a nota (S, A, B, C ou D), a precisão e o recorde do estande (guardado no navegador).
+
+| Arma (tipo) | Dano | Pente | Diferencial |
+|---|---|---|---|
+| Pistola 9mm | 1 | 12 | Precisa e com recarga rápida |
+| Revólver Magnum | 4 | 6 | Atravessa escudos e todos os alvos na linha do tiro, inclusive a refém |
+| Escopeta | 1 por chumbo (6 chumbos) | 8 | Espalha numa área e derruba grupos |
+| Rifle de Precisão | 3 | 5 | Zoom com o botão direito ou Shift; na cabeça, triplo de dano |
+| Submetralhadora | 1 | 40 | Automática: segure o clique para atirar em rajada |
+| Lança-granadas | 5 | 3 | Explosão em área que ignora escudos |
+
+As armas ficam no banco, na tela **Armas**: dá para mudar dano, pente, cadência e recarga, ou criar outras. O tipo da
+arma define o comportamento, que está programado em `static/js/jogo.js`.
+
+**Controles:**
+- Clique: atirar.
+- `1` a `6` ou rolagem do mouse: trocar de arma.
+- `R`: recarregar.
+- Botão direito ou `Shift`: zoom do rifle (no celular, use o botão 🔍 Mira).
+
+Os alvos são desenhos originais em SVG (`static/js/alvos.js`), no estilo de recortes de madeira pintados. Eles não usam
+imagens nem personagens de nenhum jogo.
 
 ## Controle de custo (chave faturada)
 
@@ -146,8 +196,10 @@ removidos antes do envio.
 |---|---|
 | `/estandes` | Lista de estandes, com miniatura da imagem quando existe |
 | `/estandes/novo` e `/estandes/{id}/editar` | Cadastro e edição |
-| `/estandes/{id}` | Detalhe, com os botões de IA e a prévia dos alvos |
+| `/estandes/{id}` | Detalhe, com os botões de IA e o botão Jogar |
+| `/estandes/{id}/jogar` | Minigame do estande |
 | `/estandes/{id}/regenerar` | Confirmação do Regenerar |
+| `/armas`, `/armas/nova`, `/armas/{id}/editar` | Cadastro das armas do minigame |
 | `/logs` | Log das gerações de imagem e gasto estimado |
 | `/h2-console` | Console do banco: JDBC URL `jdbc:h2:file:./data/estandes`, usuário `sa`, sem senha |
 
@@ -174,6 +226,17 @@ erDiagram
         BOOLEAN sucesso
         VARCHAR mensagem_erro
     }
+    ARMA {
+        BIGINT id PK
+        VARCHAR nome
+        VARCHAR tipo "PISTOLA, REVOLVER, ESCOPETA, RIFLE, SUBMETRALHADORA, LANCA_GRANADAS"
+        INT dano
+        INT capacidade
+        INT cadencia_ms
+        INT recarga_ms
+        VARCHAR diferencial
+        INT ordem
+    }
 ```
 
 Quando um estande é excluído, o log dele continua existindo (com o estande vazio), para não perder o histórico de
@@ -194,18 +257,20 @@ estande-tiro-ia/
     │   ├── config/
     │   │   ├── GenAiConfig.java        ChatClient (chave de texto) + ImageService (chave de imagem)
     │   │   ├── WebConfig.java          serve /assets/cenarios/**
-    │   │   └── DadosIniciais.java      4 estandes de exemplo na 1ª execução
+    │   │   └── DadosIniciais.java      4 estandes e 6 armas de exemplo na 1ª execução
     │   ├── controller/
     │   │   ├── EstandeTiroController   CRUD + ações de IA (descrição, prompt, cenário, regenerar)
+    │   │   ├── JogoController          página do minigame (/estandes/{id}/jogar)
+    │   │   ├── ArmaController          CRUD das armas
     │   │   ├── LogGeracaoController    tela de log
     │   │   ├── StatusIaAdvice          status da IA no topo de todas as telas
     │   │   ├── ErroController          páginas de erro amigáveis
-    │   │   ├── HomeController, EstandeForm
+    │   │   ├── HomeController, EstandeForm, ArmaForm
     │   └── model/
-    │       ├── entity/       EstandeTiro, LogGeracaoImagem, TipoEstande, EstiloVisual
-    │       ├── repository/   EstandeTiroRepository, LogGeracaoImagemRepository
+    │       ├── entity/       EstandeTiro, LogGeracaoImagem, Arma, TipoEstande, EstiloVisual, TipoArma
+    │       ├── repository/   EstandeTiroRepository, LogGeracaoImagemRepository, ArmaRepository
     │       └── service/
-    │           ├── EstandeTiroService, LogGeracaoImagemService
+    │           ├── EstandeTiroService, LogGeracaoImagemService, ArmaService
     │           ├── CenarioService           cache, limite, log e gravação da imagem
     │           ├── LimiteGeracoesImagem     MAX_IMAGE_GENERATIONS por execução
     │           ├── ArmazenamentoCenarios    salva assets/cenarios/<id>.png
@@ -217,9 +282,12 @@ estande-tiro-ia/
     │               └── TradutorErrosIa, IaException, TipoErroIa, ImagemGerada
     ├── main/resources/
     │   ├── application.properties          só referências ${...} para as chaves
-    │   ├── templates/                      layout, estandes/(lista, form, detalhe, regenerar), logs/lista, error
-    │   └── static/                         css/estilo.css, js/app.js
-    └── test/java/...                       22 testes (IA simulada, sem gastar cota)
+    │   ├── templates/                      layout, estandes/(lista, form, detalhe, jogo, regenerar),
+    │   │                                   armas/(lista, form), logs/lista, error
+    │   └── static/
+    │       ├── css/estilo.css, css/jogo.css   visual, minigame e temas de cada tipo
+    │       └── js/app.js, js/alvos.js, js/jogo.js   telas, desenhos dos alvos e motor do minigame
+    └── test/java/...                       26 testes (IA simulada, sem gastar cota)
 ```
 
 ## Segurança das chaves
