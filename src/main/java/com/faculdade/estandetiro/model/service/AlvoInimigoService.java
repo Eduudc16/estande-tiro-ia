@@ -1,6 +1,7 @@
 package com.faculdade.estandetiro.model.service;
 
 import com.faculdade.estandetiro.model.entity.AlvoInimigo;
+import com.faculdade.estandetiro.model.entity.ClasseAlvo;
 import com.faculdade.estandetiro.model.entity.TipoEstande;
 import com.faculdade.estandetiro.model.repository.AlvoInimigoRepository;
 import com.faculdade.estandetiro.model.service.ia.IaException;
@@ -61,6 +62,11 @@ public class AlvoInimigoService {
     @Transactional(readOnly = true)
     public long contar() {
         return repository.count();
+    }
+
+    @Transactional(readOnly = true)
+    public long contarRefens() {
+        return repository.countByClasse(ClasseAlvo.REFEM);
     }
 
     @Transactional

@@ -10,8 +10,8 @@
     <div class="cabecalho">
         <div>
             <h1>Alvos do minigame</h1>
-            <p class="sub">Os inimigos de cada tipo de estande. Enquanto não têm imagem, o jogo usa o desenho; depois de
-                gerada pela IA, usa a imagem recortada (fundo removido e contorno de papelão).</p>
+            <p class="sub">A refém e os inimigos de cada tipo de estande. Enquanto não têm imagem, o jogo usa o desenho;
+                depois de gerada pela IA, usa a imagem recortada (fundo removido e contorno de papelão).</p>
         </div>
     </div>
     <div class="alerta aviso compacto">
@@ -58,10 +58,11 @@
 <footer th:replace="~{fragments/layout :: rodape}"></footer>
 <script th:src="@{/js/alvos.js}"></script>
 <script>
-    // desenhos SVG dos alvos que ainda não têm imagem da IA
+    // desenhos SVG dos alvos que ainda não têm imagem da IA (índice -1 = a refém)
     Alvos.garantirDefs();
     document.querySelectorAll('[data-desenho-tipo]').forEach(function (el) {
-        var def = Alvos.inimigos(el.dataset.desenhoTipo)[Number(el.dataset.desenhoIndice)];
+        var indice = Number(el.dataset.desenhoIndice);
+        var def = indice < 0 ? Alvos.refem : Alvos.inimigos(el.dataset.desenhoTipo)[indice];
         if (def) el.innerHTML = Alvos.svg(def);
     });
 </script>

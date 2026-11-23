@@ -8,6 +8,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /** Arma disponível no minigame. Cada uma tem os seus números e o diferencial do seu tipo. */
 @Entity
@@ -22,6 +24,7 @@ public class Arma {
     private String nome;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // texto simples: novos valores no enum não quebram o banco
     @Column(nullable = false, length = 20)
     private TipoArma tipo;
 

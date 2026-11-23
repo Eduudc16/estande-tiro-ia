@@ -1,6 +1,7 @@
 package com.faculdade.estandetiro;
 
 import com.faculdade.estandetiro.model.entity.AlvoInimigo;
+import com.faculdade.estandetiro.model.entity.ClasseAlvo;
 import com.faculdade.estandetiro.model.entity.EstandeTiro;
 import com.faculdade.estandetiro.model.entity.TipoEstande;
 import com.faculdade.estandetiro.model.repository.LogGeracaoImagemRepository;
@@ -25,6 +26,7 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -76,6 +78,7 @@ class AlvosFluxoTest {
     @Test
     void telaMostraOsInimigosDeCadaTipo() throws Exception {
         mvc.perform(get("/alvos")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Refém da vila")))
                 .andExpect(content().string(containsString("Aldeão com forcado")))
                 .andExpect(content().string(containsString("Cultista com cajado")))
                 .andExpect(content().string(containsString("Gerar imagem com IA")));
@@ -83,7 +86,7 @@ class AlvosFluxoTest {
 
     @Test
     void gerarAlvoRecortaSalvaEOJogoUsaAImagem() throws Exception {
-        Long id = alvoService.listarPorTipo(TipoEstande.VILA_RURAL).get(0).getId();
+        Long id = alvo(TipoEstande.VILA_RURAL, 0).getId();
 
         mvc.perform(post("/alvos/{id}/gerar", id))
                 .andExpect(redirectedUrl("/alvos#tipo-vila_rural"))
@@ -120,8 +123,31 @@ class AlvosFluxoTest {
     }
 
     @Test
+    void refemGeradaPelaIaVaiParaOJogoSemArmaNemOlhosVermelhos() throws Exception {
+        assertThat(alvoService.contarRefens()).isEqualTo(TipoEstande.values().length);
+        AlvoInimigo refem = alvo(TipoEstande.VILA_RURAL, -1);
+        assertThat(refem.getClasse()).isEqualTo(ClasseAlvo.REFEM);
+
+        EstandeTiro vila = estandeService.listarTodos().stream()
+                .filter(e -> e.getTipo() == TipoEstande.VILA_RURAL).findFirst().orElseThrow();
+        mvc.perform(get("/estandes/{id}/jogar", vila.getId()))
+                .andExpect(content().string(containsString("refem: null")));      // ainda é o desenho
+
+        mvc.perform(post("/alvos/{id}/gerar", refem.getId())).andExpect(flash().attributeExists("sucesso"));
+
+        ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
+        verify(imageService).gerar(prompt.capture(), eq("2:3"));
+        assertThat(prompt.getValue()).contains("REFÉM", "medo", "sem nenhuma arma", "magenta")
+                .doesNotContain("olhos vermelhos");
+
+        mvc.perform(get("/estandes/{id}/jogar", vila.getId()))
+                .andExpect(content().string(containsString("refem: \"\\/assets\\/alvos\\/" + refem.getId() + ".png\"")))
+                .andExpect(content().string(not(containsString("\"nome\":\"Ref\\u00E9m da vila\""))));   // não vira inimigo
+    }
+
+    @Test
     void falhaDaApiFicaNoLogEOAlvoContinuaSemImagem() throws Exception {
-        AlvoInimigo foice = alvoService.listarPorTipo(TipoEstande.VILA_RURAL).get(2);
+        AlvoInimigo foice = alvo(TipoEstande.VILA_RURAL, 2);
         when(imageService.gerar(anyString(), anyString())).thenThrow(new IaException(TipoErroIa.COTA_ESGOTADA,
                 "Cota da chave GEMINI_API_KEY_IMAGE estourada (erro 429).", "HTTP 429 RESOURCE_EXHAUSTED"));
 
@@ -131,5 +157,11 @@ class AlvosFluxoTest {
         assertThat(alvoService.buscarPorId(foice.getId()).temImagem()).isFalse();
         assertThat(logRepository.countByAlvoInimigoId(foice.getId())).isEqualTo(1);
         mvc.perform(get("/logs")).andExpect(content().string(containsString("Aldeã com foice")));
+    }
+
+    /** Alvo de um tipo pelo índice do desenho (-1 é a refém). */
+    private AlvoInimigo alvo(TipoEstande tipo, int indice) {
+        return alvoService.listarPorTipo(tipo).stream()
+                .filter(a -> a.getIndiceDesenho() == indice).findFirst().orElseThrow();
     }
 }

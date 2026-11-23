@@ -126,6 +126,15 @@
     width: 6%; min-width: 4px; height: 9%; background: #3a2716; border-radius: 1px;
 }
 .alvo.imagem.atingido img { animation: atingido .14s; }
+/* refém com imagem da IA: contorno dourado e a placa "REFÉM" acima da cabeça */
+.alvo.refem img { filter: drop-shadow(0 0 4px rgba(255, 232, 140, .95)) drop-shadow(0 8px 6px rgba(0, 0, 0, .6)); }
+.alvo.refem-atingida img { filter: drop-shadow(0 0 10px #ff2828); }
+.placa-refem {
+    position: absolute; left: 50%; top: -9%; transform: translateX(-50%); pointer-events: none; white-space: nowrap;
+    padding: 1px 6px; border-radius: 3px; background: #f4efe2; color: #b3261e; border: 2px solid #23160c;
+    font: 700 clamp(.55rem, 1.1vw, .8rem) var(--fonte-titulo); letter-spacing: .06em;
+    box-shadow: 0 0 6px rgba(255, 232, 140, .8);
+}
 
 /* tela de alvos */
 .grupo-alvos { margin-top: 1.5rem; scroll-margin-top: 1rem; }

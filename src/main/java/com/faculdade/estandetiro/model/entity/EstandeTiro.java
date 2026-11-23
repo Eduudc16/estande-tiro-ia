@@ -9,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -28,10 +30,12 @@ public class EstandeTiro {
     private String nome;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // texto simples: novos valores no enum não quebram o banco
     @Column(nullable = false, length = 30)
     private TipoEstande tipo;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR) // texto simples: novos valores no enum não quebram o banco
     @Column(name = "estilo_visual", nullable = false, length = 20)
     private EstiloVisual estiloVisual;
 

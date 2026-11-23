@@ -18,7 +18,8 @@
             </p>
         </div>
         <div class="acoes">
-            <button class="btn pequeno fantasma" type="button" data-som>🔊 Som ligado</button>
+            <button class="btn pequeno fantasma" type="button" data-som>🔊 Efeitos ligados</button>
+            <button class="btn pequeno fantasma" type="button" data-musica>🎵 Música ligada</button>
             <a class="btn" th:href="@{/estandes/{id}(id=${estande.id})}">Sair do jogo</a>
         </div>
     </div>
@@ -103,10 +104,12 @@
     window.JOGO = {
         estande: { id: [[${estande.id}]], tipo: [[${estande.tipo.name()}]] },
         armas: [[${armasJogo}]],
-        inimigos: [[${inimigosJogo}]]
+        inimigos: [[${inimigosJogo}]],
+        refem: [[${refemJogo}]]
     };
 </script>
 <script th:src="@{/js/alvos.js}"></script>
+<script th:src="@{/js/som.js}"></script>
 <script th:src="@{/js/jogo.js}"></script>
 </body>
 </html>

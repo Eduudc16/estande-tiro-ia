@@ -34,9 +34,10 @@
             ? { classe: i.classe, imagem: i.imagem, nome: i.nome }
             : Object.assign({}, DESENHOS[i.indice] || DESENHOS[0], { classe: i.classe }))
         : DESENHOS;
+    // a refém: imagem gerada pela IA para este tipo, ou o desenho padrão
+    const REFEM = cfg.refem ? { classe: 'refem', refem: true, imagem: cfg.refem } : Alvos.refem;
     const MASCARAS = new Map();                   // imagem -> transparência e posição da cabeça
     const CHAVE_RECORDE = 'estande-sombrio:recorde:' + cfg.estande.id;
-    const CHAVE_SOM = 'estande-sombrio:som';
 
     // ------------------------------------------------------------ elementos
     const q = s => palco.querySelector(s);
@@ -50,6 +51,7 @@
     const telaInicio = q('[data-tela-inicio]'), telaFim = q('[data-tela-fim]');
     const barra = document.querySelector('[data-armas]');
     const botaoSom = document.querySelector('[data-som]');
+    const botaoMusica = document.querySelector('[data-musica]');
 
     // ------------------------------------------------------------ estado
     let rodando = false, inicio = 0, ultimoQuadro = 0, proximoSurgimento = 0, pausadoEm = 0;
@@ -62,7 +64,7 @@
     let zoom = false, shift = false, gatilho = false, rajada = 0, ultimaRoda = 0, avisoTimer = 0;
     const ponteiro = { x: 0, y: 0, dentro: false };
     let st = novaPartida();
-    let somLigado = ler(CHAVE_SOM, '1') !== '0';
+    let ultimoSegundo = 0, acelerou = false;           // contagem final e música mais rápida
 
     function novaPartida() {
         return { pontos: 0, tiros: 0, acertos: 0, abatidos: 0, cabeca: 0, refens: 0 };
@@ -169,7 +171,7 @@
         const sorte = Math.random();
         if (sorte < 0.16) {
             // a refém, muitas vezes com um inimigo colado nela
-            const refem = criarAlvo(Alvos.refem, { trilho: sortear([0, 1, 2]) }, progresso, agora);
+            const refem = criarAlvo(REFEM, { trilho: sortear([0, 1, 2]) }, progresso, agora);
             if (refem && Math.random() < 0.65) {
                 criarAlvo(sortear(INIMIGOS), {
                     trilho: Math.max(0, refem.trilho - 1), x: refem.x + sortear([-7, 7]), forcar: true
@@ -209,7 +211,8 @@
         el.style.setProperty('--escala', trilho.escala);
         el.style.zIndex = String(trilho.z);
         const figura = def.imagem ? `<img src="${esc(def.imagem)}" alt="" draggable="false">` : Alvos.svg(def);
-        el.innerHTML = figura + (classe.vida > 1 ? '<span class="vida"><i></i></span>' : '');
+        const placa = def.refem && def.imagem ? '<span class="placa-refem">REFÉM</span>' : '';   // o desenho já tem a placa
+        el.innerHTML = figura + placa + (classe.vida > 1 ? '<span class="vida"><i></i></span>' : '');
         camada.appendChild(el);
         void el.offsetWidth;                      // aplica o estado "deitado" antes de animar a subida
         el.classList.add('de-pe');
@@ -245,7 +248,7 @@
         if (a.refem && rodando) {
             st.refens++;
             somarPontos(BONUS_REFEM, a, 'Refém salva!');
-            som('bonus');
+            Som.efeito('refemSalva');
         }
         remover(a, atraso);
     }
@@ -261,11 +264,11 @@
         atualizarRecarga(agora);
         if (recarga) { avisar('Recarregando…'); return; }
         if (agora - trocouEm < SAQUE_MS || agora - ultimosTiros[armaIdx] < arma.cadenciaMs) return;
-        if (pente[armaIdx] <= 0) { som('vazio'); recarregar(); return; }
+        if (pente[armaIdx] <= 0) { Som.efeito('vazio'); recarregar(); return; }
         ultimosTiros[armaIdx] = agora;
         pente[armaIdx]--;
         st.tiros++;
-        som(arma.tipo);
+        Som.tiro(arma.tipo);
 
         const { x, y } = ponteiro;
         const larg = palco.clientWidth;
@@ -315,7 +318,7 @@
         let acertou = false;
         for (const [a, parte] of partes) {
             if (parte === 'escudo') {
-                if (!perfura) { marcar('faisca', cx, cy); som('escudo'); avisar('Bloqueado pelo escudo'); return false; }
+                if (!perfura) { marcar('faisca', cx, cy); Som.efeito('escudo'); avisar('Bloqueado pelo escudo'); return false; }
                 continue;
             }
             const cabeca = parte === 'cabeca';
@@ -329,7 +332,7 @@
     // ------------------------------------------------------------ alvos com imagem da IA
     /** Carrega as imagens antes da partida e guarda a transparência de cada uma (para o acerto no pixel). */
     function prepararImagens() {
-        const urls = [...new Set(INIMIGOS.filter(d => d.imagem).map(d => d.imagem))];
+        const urls = [...new Set(INIMIGOS.concat([REFEM]).filter(d => d.imagem).map(d => d.imagem))];
         return Promise.all(urls.map(url => new Promise(pronto => {
             const img = new Image();
             img.onload = () => {
@@ -386,7 +389,7 @@
         efeitos.appendChild(ex);
         setTimeout(() => ex.remove(), 650);
         tremer();
-        som('explosao');
+        Som.efeito('explosao');
         const raio = RAIO_EXPLOSAO * palco.clientWidth;
         let acertou = false;
         for (const a of alvos.slice()) {
@@ -408,7 +411,7 @@
         a.el.classList.remove('atingido');
         void a.el.offsetWidth;
         a.el.classList.add('atingido');
-        som('acerto');
+        Som.efeito(cabeca ? 'cabeca' : 'acerto');
         if (a.vida > 0) {
             const barraVida = a.el.querySelector('.vida i');
             if (barraVida) barraVida.style.width = Math.max(0, a.vida / a.vidaMax * 100) + '%';
@@ -417,6 +420,7 @@
         }
         a.estado = 'caido';
         a.el.classList.add('caido');
+        Som.efeito('queda');
         st.abatidos++;
         const mult = cabeca ? (arma.tipo === 'RIFLE' ? 2 : 1.5) : 1;
         somarPontos(Math.round(a.pontos * mult), a, cabeca ? 'Na cabeça!' : '');
@@ -427,7 +431,7 @@
     function derrota(a) {
         a.estado = 'caido';
         a.el.classList.add('caido', 'refem-atingida');
-        som('refem');
+        Som.efeito('refemAtingida');
         palco.classList.add('alerta-refem');
         terminar(true);
     }
@@ -439,7 +443,7 @@
         const agora = performance.now();
         recarga = { idx: armaIdx, inicio: agora, fim: agora + a.recargaMs };
         palco.classList.add('recarregando');
-        som('recarga');
+        Som.recarga(a.tipo, a.recargaMs);
         avisar('Recarregando…', a.recargaMs);
     }
     function atualizarRecarga(agora) {
@@ -456,11 +460,11 @@
         if (i < 0 || i >= ARMAS.length || i === armaIdx) return;
         armaIdx = i;
         trocouEm = performance.now();
-        if (recarga) { recarga = null; palco.classList.remove('recarregando'); }
+        if (recarga) { recarga = null; palco.classList.remove('recarregando'); Som.cancelarRecarga(); }
         pararRajada();
         definirZoom(shift);
         atualizarHudArma();
-        som('troca');
+        Som.efeito('troca');
         if (rodando && pente[armaIdx] === 0) recarregar();
     }
     function iniciarRajada() {
@@ -525,6 +529,11 @@
         hud.tempo.textContent = (resta / 1000).toFixed(2);
         hud.tempo.classList.toggle('acabando', resta < 10000);
         if (resta <= 0) { terminar(false); return; }
+        if (resta < 10000) {                      // últimos 10 s: relógio tiquetaqueando e música mais rápida
+            const segundo = Math.ceil(resta / 1000);
+            if (segundo !== ultimoSegundo) { ultimoSegundo = segundo; Som.efeito(segundo <= 3 ? 'tiqueFinal' : 'tique'); }
+            if (!acelerou) { acelerou = true; Som.musica.acelerar(1.18); }
+        }
         const progresso = passou / DURACAO_MS;
         if (agora >= proximoSurgimento) {
             surgir(progresso, agora);
@@ -550,7 +559,11 @@
         rodando = true;
         inicio = ultimoQuadro = performance.now();
         proximoSurgimento = inicio + 500;
-        prepararSom();
+        ultimoSegundo = 0;
+        acelerou = false;
+        Som.iniciar();
+        Som.efeito('inicio');
+        Som.musica.tocar();
         atualizarHudArma();
         mira.hidden = !ponteiro.dentro;
         requestAnimationFrame(quadro);
@@ -558,6 +571,8 @@
 
     function terminar(perdeu) {
         rodando = false;
+        Som.musica.parar();
+        Som.cancelarRecarga();
         gatilho = false;
         pararRajada();
         definirZoom(false);
@@ -581,6 +596,7 @@
             q('[data-fim-refens]').textContent = st.refens;
             q('[data-fim-recorde]').textContent = novoRecorde ? `${st.pontos} (novo recorde!)` : String(recordeAntigo);
             telaFim.classList.toggle('derrota', perdeu);
+            Som.efeito(perdeu ? 'derrota' : 'fim');
             telaFim.hidden = false;
         }, perdeu ? 900 : 300);
     }
@@ -591,77 +607,10 @@
         efeitos.innerHTML = '';
     }
 
-    // ------------------------------------------------------------ som (sintetizado, sem arquivos)
-    let audio = null, ruido = null;
-    function prepararSom() {
-        if (!somLigado || audio) return;
-        try {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (!Ctx) return;
-            audio = new Ctx();
-            ruido = audio.createBuffer(1, audio.sampleRate, audio.sampleRate);
-            const d = ruido.getChannelData(0);
-            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-        } catch (e) {
-            audio = null;
-        }
-    }
-    function estouro(duracao, freq, volume) {
-        const t = audio.currentTime;
-        const fonte = audio.createBufferSource();
-        fonte.buffer = ruido;
-        const filtro = audio.createBiquadFilter();
-        filtro.type = 'lowpass';
-        filtro.frequency.setValueAtTime(freq, t);
-        filtro.frequency.exponentialRampToValueAtTime(Math.max(60, freq / 8), t + duracao);
-        const ganho = audio.createGain();
-        ganho.gain.setValueAtTime(volume, t);
-        ganho.gain.exponentialRampToValueAtTime(0.001, t + duracao);
-        fonte.connect(filtro);
-        filtro.connect(ganho);
-        ganho.connect(audio.destination);
-        fonte.start(t);
-        fonte.stop(t + duracao);
-    }
-    function bip(freq, duracao, volume, forma) {
-        const t = audio.currentTime;
-        const osc = audio.createOscillator();
-        osc.type = forma || 'square';
-        osc.frequency.setValueAtTime(freq, t);
-        const ganho = audio.createGain();
-        ganho.gain.setValueAtTime(volume, t);
-        ganho.gain.exponentialRampToValueAtTime(0.001, t + duracao);
-        osc.connect(ganho);
-        ganho.connect(audio.destination);
-        osc.start(t);
-        osc.stop(t + duracao);
-    }
-    const depois = (ms, fn) => setTimeout(() => { if (audio && somLigado) fn(); }, ms);
-    const SONS = {
-        PISTOLA: () => estouro(0.12, 3800, 0.45),
-        REVOLVER: () => estouro(0.35, 2000, 0.8),
-        ESCOPETA: () => estouro(0.4, 1600, 0.9),
-        RIFLE: () => estouro(0.3, 4200, 0.7),
-        SUBMETRALHADORA: () => estouro(0.07, 4600, 0.3),
-        LANCA_GRANADAS: () => bip(150, 0.15, 0.25, 'sine'),
-        explosao: () => estouro(0.9, 900, 1),
-        acerto: () => bip(330, 0.06, 0.12, 'triangle'),
-        escudo: () => bip(2100, 0.07, 0.08, 'square'),
-        vazio: () => bip(950, 0.04, 0.08, 'square'),
-        recarga: () => { bip(520, 0.05, 0.1, 'square'); depois(150, () => bip(760, 0.05, 0.1, 'square')); },
-        troca: () => bip(440, 0.04, 0.06, 'triangle'),
-        bonus: () => { bip(880, 0.09, 0.1, 'triangle'); depois(90, () => bip(1320, 0.12, 0.1, 'triangle')); },
-        refem: () => bip(110, 0.7, 0.3, 'sawtooth')
-    };
-    function som(nome) {
-        if (!somLigado || !audio || !SONS[nome]) return;
-        try {
-            if (audio.state === 'suspended') audio.resume();
-            SONS[nome]();
-        } catch (e) { /* som é opcional */ }
-    }
-    function atualizarBotaoSom() {
-        if (botaoSom) botaoSom.textContent = somLigado ? '🔊 Som ligado' : '🔇 Som desligado';
+    // ------------------------------------------------------------ som e música (static/js/som.js)
+    function atualizarBotoesSom() {
+        if (botaoSom) botaoSom.textContent = Som.efeitosLigados() ? '🔊 Efeitos ligados' : '🔇 Efeitos desligados';
+        if (botaoMusica) botaoMusica.textContent = Som.musicaLigada() ? '🎵 Música ligada' : '🎵 Música desligada';
     }
 
     // ------------------------------------------------------------ controles
@@ -709,11 +658,13 @@
         if (!rodando) return;
         if (document.hidden) {
             pausadoEm = performance.now();
+            Som.pausar();
             gatilho = false;
             pararRajada();
             return;
         }
         if (!pausadoEm) return;
+        Som.continuar();
         const d = performance.now() - pausadoEm;
         pausadoEm = 0;
         inicio += d; proximoSurgimento += d; ultimoQuadro += d; trocouEm += d;
@@ -727,17 +678,18 @@
     botoesComecar.forEach(b => { b.disabled = true; b.addEventListener('click', comecar); });
     prepararImagens().then(() => botoesComecar.forEach(b => { b.disabled = !ARMAS.length; }));
     if (botaoSom) {
-        botaoSom.addEventListener('click', () => {
-            somLigado = !somLigado;
-            gravar(CHAVE_SOM, somLigado ? '1' : '0');
-            if (somLigado) prepararSom();
-            atualizarBotaoSom();
+        botaoSom.addEventListener('click', () => { Som.alternarEfeitos(); atualizarBotoesSom(); });
+    }
+    if (botaoMusica) {
+        botaoMusica.addEventListener('click', () => {
+            if (Som.alternarMusica() && rodando) { Som.iniciar(); Som.musica.tocar(); }
+            atualizarBotoesSom();
         });
     }
     window.addEventListener('resize', atualizarMira);
 
     montarBarra();
-    atualizarBotaoSom();
+    atualizarBotoesSom();
     atualizarHudArma();
     hud.tempo.textContent = (DURACAO_MS / 1000).toFixed(2);
 })();

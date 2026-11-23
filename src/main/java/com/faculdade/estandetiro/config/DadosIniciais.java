@@ -11,13 +11,15 @@ import com.faculdade.estandetiro.model.service.AlvoInimigoService;
 import com.faculdade.estandetiro.model.service.ArmaService;
 import com.faculdade.estandetiro.model.service.EstandeTiroService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * Cadastra dados de exemplo quando as tabelas estão vazias: 4 estandes (sem textos nem imagens), os inimigos de
- * cada tipo de estande (sem imagens) e 6 armas.
+ * Cadastra dados de exemplo quando as tabelas estão vazias: 4 estandes (sem textos nem imagens), os inimigos e a
+ * refém de cada tipo de estande (sem imagens) e 6 armas.
  */
 @Component
+@Order(1)   // depois do AjusteColunasEnum
 public class DadosIniciais implements CommandLineRunner {
 
     private final EstandeTiroService estandeService;
@@ -76,6 +78,29 @@ public class DadosIniciais implements CommandLineRunner {
                 "capitão pirata sombrio, alto e barbudo, de casaco longo escuro e chapéu tricórnio, segurando um sabre");
     }
 
+    /**
+     * A refém de cada tipo (índice -1: fica antes dos inimigos e, sem imagem, usa o desenho da refém).
+     * Visual original e discreto: mãos amarradas e expressão de medo.
+     */
+    private void criarRefens() {
+        String maos = ", com as mãos amarradas à frente por uma corda grossa";
+        alvo(TipoEstande.VILA_RURAL, -1, "Refém da vila", ClasseAlvo.REFEM,
+                "jovem refém assustada de uma vila europeia antiga, de cabelo castanho-escuro preso em rabo de cavalo, "
+                        + "blusa de linho branca, colete azul-marinho e saia longa azul" + maos);
+        alvo(TipoEstande.CASTELO, -1, "Refém do castelo", ClasseAlvo.REFEM,
+                "jovem refém assustada, de cabelo preto preso em trança, vestido longo e simples cinza-claro de "
+                        + "criada de castelo" + maos);
+        alvo(TipoEstande.BASE_MILITAR, -1, "Refém da base", ClasseAlvo.REFEM,
+                "jovem refém assustada, de cabelo ruivo curto, macacão laranja de prisioneira, com as mãos presas à "
+                        + "frente por uma braçadeira de plástico");
+        alvo(TipoEstande.MINA, -1, "Refém da mina", ClasseAlvo.REFEM,
+                "jovem refém assustada, de cabelo castanho preso em coque, camisa xadrez, calça de trabalho e rosto "
+                        + "sujo de carvão" + maos);
+        alvo(TipoEstande.PORTO, -1, "Refém do porto", ClasseAlvo.REFEM,
+                "jovem refém assustada, de cabelo preto ondulado, blusa listrada de marinheiro e saia longa escura"
+                        + maos);
+    }
+
     private void alvo(TipoEstande tipo, int indice, String nome, ClasseAlvo classe, String descricao) {
         alvoService.criar(new AlvoInimigo(tipo, indice, nome, classe, descricao));
     }
@@ -90,6 +115,9 @@ public class DadosIniciais implements CommandLineRunner {
         }
         if (alvoService.contar() == 0) {
             criarAlvos();
+        }
+        if (alvoService.contarRefens() == 0) {
+            criarRefens();
         }
         if (armaService.contar() == 0) {
             armaService.criar(new Arma("Pistola 9mm", TipoArma.PISTOLA, 1, 12, 220, 1100,

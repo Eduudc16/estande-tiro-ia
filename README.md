@@ -67,7 +67,7 @@ mina), ainda sem textos nem imagens, e as 6 armas do minigame. Se a porta 8080 e
 `application.properties` faz o Spring Boot ler o `.env` como arquivo de propriedades, sem nenhuma dependência extra.
 Variáveis de ambiente do sistema, se existirem, têm prioridade sobre o `.env`.
 
-**Testes:** `.\mvnw.cmd test` roda 33 testes. Neles a IA é simulada (mocks), então eles não usam as chaves nem gastam
+**Testes:** `.\mvnw.cmd test` roda 34 testes. Neles a IA é simulada (mocks), então eles não usam as chaves nem gastam
 cota.
 
 ## As duas chaves de API
@@ -105,8 +105,9 @@ Na tela do estande, em **Gerar com IA**:
 3. **Gerar cenário com IA** (imagem, chave faturada). Gera a imagem de fundo em 16:9, salva em
    `assets/cenarios/<id>.png` (servida em `/assets/cenarios/<id>.png`) e guarda o caminho no banco.
    O botão **Regenerar…** só aparece quando o estande já tem imagem e sempre passa por uma tela de confirmação.
-4. **Gerar alvos com IA** (imagem, chave faturada), na tela **Alvos**. Gera cada inimigo do minigame como um
-   personagem original. O prompt pede fundo magenta liso e não cita jogo nem personagem. Depois
+4. **Gerar alvos com IA** (imagem, chave faturada), na tela **Alvos**. Gera cada inimigo e a refém de cada tipo
+   como personagens originais. O prompt pede fundo magenta liso e não cita jogo nem personagem; o da refém pede uma
+   vítima assustada, sem armas e sem olhos brilhando. Depois
    [`RecorteAlvo`](src/main/java/com/faculdade/estandetiro/model/service/ia/RecorteAlvo.java):
    - tira o fundo (inclusive os pedaços presos entre braço e corpo);
    - corta no personagem e reduz o tamanho;
@@ -114,7 +115,7 @@ Na tela do estande, em **Gerar com IA**:
 
    O recorte vai para `assets/alvos/<id>.png` e o jogo passa a usar essa imagem no lugar do desenho. A imagem
    original fica guardada em `data/alvos-originais` (fora do Git), então **"Refazer recorte" é grátis**: não chama a
-   API. Os 4 aldeões da vila já foram gerados assim.
+   API. A refém e os 4 aldeões da vila já foram gerados assim.
 
 Base do prompt de imagem. Os trechos entre colchetes vêm do tipo e do estilo do estande, em
 [`TipoEstande`](src/main/java/com/faculdade/estandetiro/model/entity/TipoEstande.java):
@@ -175,11 +176,29 @@ arma define o comportamento, que está programado em `static/js/jogo.js`.
 - Botão direito ou `Shift`: zoom do rifle (no celular, use o botão 🔍 Mira).
 
 **Aparência dos alvos:**
-- Cada inimigo usa a **imagem gerada pela IA** quando ela existe (tela **Alvos**). Senão, usa o desenho original em
-  SVG (`static/js/alvos.js`), no estilo de recorte de madeira pintado.
+- Cada inimigo e a refém usam a **imagem gerada pela IA** quando ela existe (tela **Alvos**). Senão, usam o desenho
+  original em SVG (`static/js/alvos.js`), no estilo de recorte de madeira pintado.
 - Nas imagens, o acerto é conferido no pixel: tiro na parte transparente passa direto. A cabeça é achada
   automaticamente no topo do recorte.
+- A refém com imagem da IA ganha uma placa "REFÉM" acima da cabeça.
 - Nada usa imagens ou personagens de outros jogos.
+
+**Som e música:** tudo é sintetizado na hora com a Web Audio API, em
+[`static/js/som.js`](src/main/resources/static/js/som.js), sem arquivos de áudio.
+- **Tiro de cada arma:**
+  - Pistola: estalo seco.
+  - Revólver: estrondo grave com anel metálico.
+  - Escopeta: explosão larga, seguida do bombeamento.
+  - Rifle: estalo agudo com eco pelo galpão, seguido do ferrolho.
+  - Submetralhadora: estalinhos que variam um pouco a cada tiro.
+  - Lança-granadas: "tump" oco, e a explosão vem depois.
+- **Recarga de cada arma:** cada uma tem a sua sequência de cliques. O revólver, por exemplo, abre o tambor, solta as
+  cápsulas, põe 6 balas e fecha.
+- **Outros sons:** acerto na madeira, "plim" do tiro na cabeça, bala no escudo, alvo tombando, refém salva e refém
+  atingida, e o relógio tiquetaqueando nos últimos 10 segundos.
+- **Música:** uma **valsa sinistra de parque de diversões composta para este projeto** (lá menor, 3/4), que acelera
+  nos últimos 10 segundos. Não é a música do jogo original.
+- Os botões **Efeitos** e **Música** da tela do jogo ligam e desligam cada parte separadamente.
 
 ## Controle de custo (chave faturada)
 
@@ -214,7 +233,7 @@ arma define o comportamento, que está programado em `static/js/jogo.js`.
 | `/estandes/{id}/jogar` | Minigame do estande |
 | `/estandes/{id}/regenerar` | Confirmação do Regenerar |
 | `/armas`, `/armas/nova`, `/armas/{id}/editar` | Cadastro das armas do minigame |
-| `/alvos` e `/alvos/{id}/regenerar` | Inimigos de cada tipo: gerar com IA, regenerar (com confirmação) e refazer o recorte |
+| `/alvos` e `/alvos/{id}/regenerar` | Refém e inimigos de cada tipo: gerar com IA, regenerar (com confirmação) e refazer o recorte |
 | `/logs` | Log das gerações de imagem e gasto estimado |
 | `/h2-console` | Console do banco: JDBC URL `jdbc:h2:file:./data/estandes`, usuário `sa`, sem senha |
 
@@ -285,7 +304,8 @@ estande-tiro-ia/
     │   ├── config/
     │   │   ├── GenAiConfig.java        ChatClient (chave de texto) + ImageService (chave de imagem)
     │   │   ├── WebConfig.java          serve /assets/cenarios/**
-    │   │   └── DadosIniciais.java      4 estandes e 6 armas de exemplo na 1ª execução
+    │   │   ├── AjusteColunasEnum.java  migra colunas ENUM antigas do H2 para texto (sem perder dados)
+    │   │   └── DadosIniciais.java      estandes, alvos (inimigos e refém) e armas de exemplo
     │   ├── controller/
     │   │   ├── EstandeTiroController   CRUD + ações de IA (descrição, prompt, cenário, regenerar)
     │   │   ├── JogoController          página do minigame (/estandes/{id}/jogar)
@@ -311,7 +331,7 @@ estande-tiro-ia/
     │               ├── IaTextoService       funcionalidades 1 e 2 (Spring AI ChatClient)
     │               ├── ImageService         funcionalidade 3 (RestClient, chave faturada)
     │               ├── PromptImagem         base do prompt + regras obrigatórias
-    │               ├── PromptAlvo, RecorteAlvo   prompt dos inimigos e recorte do fundo magenta
+    │               ├── PromptAlvo, RecorteAlvo   prompt dos alvos (inimigos e refém) e recorte do fundo magenta
     │               ├── FiltroTermosProibidos
     │               └── TradutorErrosIa, IaException, TipoErroIa, ImagemGerada
     ├── main/resources/
@@ -320,8 +340,9 @@ estande-tiro-ia/
     │   │                                   armas/(lista, form), alvos/(lista, regenerar), logs/lista, error
     │   └── static/
     │       ├── css/estilo.css, css/jogo.css   visual, minigame e temas de cada tipo
-    │       └── js/app.js, js/alvos.js, js/jogo.js   telas, desenhos dos alvos e motor do minigame
-    └── test/java/...                       33 testes (IA simulada, sem gastar cota)
+    │       └── js/app.js, js/alvos.js, js/jogo.js, js/som.js   telas, desenhos dos alvos,
+    │                                                          motor do minigame, sons e música
+    └── test/java/...                       34 testes (IA simulada, sem gastar cota)
 ```
 
 ## Segurança das chaves
