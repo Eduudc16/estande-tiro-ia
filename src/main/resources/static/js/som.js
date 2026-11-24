@@ -395,13 +395,19 @@ window.Som = (() => {
     function pararFaixa() {
         if (faixaAtual) { faixaAtual.pause(); faixaAtual = null; }
     }
+    // limite de vozes: no máximo um grito a cada 1,5 s, e nunca dois ao mesmo tempo
+    let ultimoGrito = -1e9, gritoTocando = null;
     function grito(feminino) {
         if (!efeitosLigados) return;
+        const agora = performance.now();
+        if (agora - ultimoGrito < 1500 || (gritoTocando && !gritoTocando.ended && !gritoTocando.paused)) return;
         const nome = feminino && disponivel['grito-feminino'] ? 'grito-feminino'
             : GRITOS.filter(g => disponivel[g])[Math.floor(Math.random() * GRITOS.filter(g => disponivel[g]).length)];
         if (!nome) return;
         const a = faixas[nome].cloneNode();
-        a.volume = 0.8;
+        a.volume = 0.7;
+        ultimoGrito = agora;
+        gritoTocando = a;
         a.play().catch(() => {});
     }
 

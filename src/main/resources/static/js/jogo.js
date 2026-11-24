@@ -62,6 +62,7 @@
     let trocouEm = -1e9;
     const ultimosTiros = ARMAS.map(() => -1e9);         // a cadência vale para cada arma
     const pente = ARMAS.map(a => a.capacidade);
+    let inimigosNascidos = 0;
     let zoom = false, shift = false, gatilho = false, rajada = 0, ultimaRoda = 0, avisoTimer = 0;
     const ponteiro = { x: 0, y: 0, dentro: false };
     let st = novaPartida();
@@ -227,6 +228,7 @@
         };
         el._alvo = alvo;
         alvos.push(alvo);
+        if (!def.refem && ++inimigosNascidos % 10 === 0) Som.grito(!!(def.feminino || def.saia));
         return alvo;
     }
 
@@ -423,7 +425,7 @@
         a.estado = 'caido';
         a.el.classList.add('caido');
         Som.efeito('queda');
-        Som.grito(!!(a.def.feminino || a.def.saia));
+        if (Math.random() < 0.34) Som.grito(!!(a.def.feminino || a.def.saia));
         st.abatidos++;
         const mult = cabeca ? (arma.tipo === 'RIFLE' ? 2 : 1.5) : 1;
         somarPontos(Math.round(a.pontos * mult), a, cabeca ? 'Na cabeça!' : '');
@@ -618,7 +620,7 @@
     }
 
     // ------------------------------------------------------------ controles
-    palco.addEventListener('pointerdown', ev => {
+    palco.addEventListener('mousedown', ev => {
         if (!rodando || ev.target.closest('[data-zoom]')) return;
         atualizarPonteiro(ev);
         if (ev.button === 2) { definirZoom(true); return; }
@@ -630,7 +632,7 @@
     });
     palco.addEventListener('pointermove', atualizarPonteiro);
     palco.addEventListener('pointerleave', () => { ponteiro.dentro = false; mira.hidden = true; });
-    window.addEventListener('pointerup', ev => {
+    window.addEventListener('mouseup', ev => {
         if (ev.button === 2) { if (!shift) definirZoom(false); return; }
         gatilho = false;
         pararRajada();
