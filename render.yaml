@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: estande-tiro-ia
+    runtime: docker
+    plan: free
+    envVars:
+      - key: GEMINI_API_KEY_TEXT
+        sync: false
+      - key: GEMINI_API_KEY_IMAGE
+        sync: false
+      - key: MAX_IMAGE_GENERATIONS
+        value: "5"

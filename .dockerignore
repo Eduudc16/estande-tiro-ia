@@ -1,0 +1,8 @@
+.env
+.env.*
+data/
+audio-local/
+target/
+.git/
+.idea/
+.vscode/
