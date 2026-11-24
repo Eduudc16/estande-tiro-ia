@@ -363,9 +363,15 @@ window.Som = (() => {
     // Se existirem em /audio (pasta audio-local, fora do Git), substituem a música sintetizada e
     // acrescentam abertura, derrota e gritos dos inimigos. Sem os arquivos, nada muda.
     const faixas = {}, disponivel = {};
+    // nome interno -> arquivo em /audio (pasta audio/ do projeto)
+    const ARQUIVOS = {
+        abertura: 'som-abertura.mp3', menu: 'musica-menu.mp3', partida: 'musica-cenario.mp3', derrota: 'game-over.mp3',
+        'grito-1': 'grito-inimigo-1.mp3', 'grito-2': 'grito-inimigo-2.mp3', 'grito-3': 'grito-inimigo-3.mp3',
+        'grito-4': 'grito-inimigo-4.mp3', 'grito-5': 'grito-inimigo-5.mp3', 'grito-feminino': 'grito-inimigo-feminino.mp3'
+    };
     const GRITOS = ['grito-1', 'grito-2', 'grito-3', 'grito-4', 'grito-5'];
     ['abertura', 'menu', 'partida', 'derrota', 'grito-feminino'].concat(GRITOS).forEach(nome => {
-        const a = new Audio('/audio/' + nome + '.mp3');
+        const a = new Audio('/audio/' + (ARQUIVOS[nome] || nome + '.mp3'));
         a.preload = 'auto';
         a.addEventListener('canplaythrough', () => { disponivel[nome] = true; }, { once: true });
         a.addEventListener('error', () => { disponivel[nome] = false; });

@@ -12,6 +12,7 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 COPY assets assets
+COPY audio audio
 ENV SPRING_PROFILES_ACTIVE=render
 EXPOSE 8080
 CMD ["java", "-Xmx384m", "-jar", "app.jar"]
