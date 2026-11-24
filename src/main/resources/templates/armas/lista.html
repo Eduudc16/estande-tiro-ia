@@ -24,6 +24,7 @@
                     <p class="sub" th:text="${a.tipo.rotulo}">Pistola</p>
                 </div>
             </header>
+            <div class="modelo-arma-cartao" th:attr="data-modelo-arma=${a.tipo.name()}"></div>
             <p class="diferencial" th:text="${a.diferencial} ?: ${a.tipo.comportamento}">Diferencial</p>
             <dl class="stats">
                 <dt>Dano</dt><dd th:text="${a.dano}">1</dd>
@@ -47,5 +48,6 @@
 </main>
 
 <footer th:replace="~{fragments/layout :: rodape}"></footer>
+<script th:src="@{/js/armas-modelos.js}"></script>
 </body>
 </html>

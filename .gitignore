@@ -20,3 +20,6 @@ target/
 .DS_Store
 *.log
 .claude/
+
+# Audios locais (sem direitos para publicar): ficam so no seu computador
+audio-local/

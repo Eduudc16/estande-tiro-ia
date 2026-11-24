@@ -1,18 +1,18 @@
-/* Estande Sombrio — visual escuro: madeira velha, luz de lampião e um toque de sangue */
+/* Estande Sombrio — visual escuro: cinza grafite com detalhes em azul bem claro */
 :root {
-    --fundo: #0e0c0a;
-    --fundo-2: #16120e;
-    --painel: #1e1913;
-    --painel-2: #262019;
-    --borda: #3a3026;
-    --texto: #ece3d0;
-    --texto-2: #a89a82;
-    --lampiao: #e0a63a;
-    --lampiao-escuro: #8a6420;
+    --fundo: #121417;
+    --fundo-2: #181b1f;
+    --painel: #1f2328;
+    --painel-2: #272c32;
+    --borda: #3a4048;
+    --texto: #e6eaee;
+    --texto-2: #9aa3ad;
+    --lampiao: #a9c6e3;
+    --lampiao-escuro: #5f7a94;
     --sangue: #a8322b;
     --sangue-claro: #f0b3ac;
     --sucesso: #6a9a55;
-    --madeira: #4a3524;
+    --madeira: #3b4148;
     --raio: 6px;
     --fonte-titulo: "Oswald", "Arial Narrow", Impact, sans-serif;
     --fonte: "Inter", "Segoe UI", system-ui, sans-serif;
@@ -27,8 +27,8 @@ body {
     display: flex;
     flex-direction: column;
     background:
-        radial-gradient(ellipse 80% 45% at 50% -5%, rgba(224, 166, 58, .16), transparent 70%),
-        radial-gradient(ellipse at bottom, #1a120c 0%, transparent 60%),
+        radial-gradient(ellipse 80% 45% at 50% -5%, rgba(169, 198, 227, .16), transparent 70%),
+        radial-gradient(ellipse at bottom, #14171b 0%, transparent 60%),
         var(--fundo);
     color: var(--texto);
     font-family: var(--fonte);
@@ -44,7 +44,7 @@ h1, h2, h3 {
     margin: 0 0 .5rem;
     line-height: 1.2;
 }
-h1 { font-size: 1.9rem; color: var(--lampiao); text-shadow: 0 0 18px rgba(224, 166, 58, .25); }
+h1 { font-size: 1.9rem; color: var(--lampiao); text-shadow: 0 0 18px rgba(169, 198, 227, .25); }
 h2 { font-size: 1.2rem; margin-top: 2rem; }
 h2 small { font: 500 .75rem var(--fonte); color: var(--texto-2); text-transform: none; letter-spacing: 0; margin-left: .4rem; }
 a { color: inherit; }
@@ -73,10 +73,10 @@ code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-siz
 }
 .marca-icone {
     width: 34px; height: 34px; border-radius: 50%; flex: none;
-    background: radial-gradient(circle, var(--sangue) 0 18%, #e9dcc0 19% 34%, var(--sangue) 35% 52%,
-        #e9dcc0 53% 68%, var(--madeira) 69%);
+    background: radial-gradient(circle, var(--sangue) 0 18%, #e3e8ed 19% 34%, var(--sangue) 35% 52%,
+        #e3e8ed 53% 68%, var(--madeira) 69%);
     border: 2px solid var(--lampiao-escuro);
-    box-shadow: 0 0 12px rgba(224, 166, 58, .35);
+    box-shadow: 0 0 12px rgba(169, 198, 227, .35);
 }
 .menu { display: flex; gap: .25rem; flex-wrap: wrap; }
 .menu a {
@@ -84,7 +84,7 @@ code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-siz
     color: var(--texto-2); font-weight: 500; font-size: .9rem;
 }
 .menu a:hover { color: var(--texto); background: rgba(255, 255, 255, .05); }
-.menu a.ativo { color: #1a1410; background: var(--lampiao); }
+.menu a.ativo { color: #16191d; background: var(--lampiao); }
 .status-ia { display: flex; gap: .5rem; flex-wrap: wrap; margin-left: auto; }
 .chip-ia {
     display: inline-flex; align-items: center; gap: .4rem; padding: .25rem .65rem;
@@ -111,7 +111,7 @@ code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-siz
 .meta { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin: 0; }
 .etiqueta {
     display: inline-block; padding: .1rem .6rem; border-radius: 999px; font-size: .78rem; font-weight: 600;
-    background: rgba(224, 166, 58, .12); border: 1px solid var(--lampiao-escuro); color: #f1cf8c;
+    background: rgba(169, 198, 227, .12); border: 1px solid var(--lampiao-escuro); color: #f1cf8c;
 }
 .rodape {
     text-align: center; color: var(--texto-2); font-size: .78rem; padding: 1.25rem;
@@ -129,7 +129,7 @@ code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-siz
 .btn:hover { border-color: var(--lampiao-escuro); background: #2f271e; }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
-.btn.primario { background: var(--lampiao); color: #1a1410; border-color: var(--lampiao); }
+.btn.primario { background: var(--lampiao); color: #16191d; border-color: var(--lampiao); }
 .btn.primario:hover:not(:disabled) { background: #edb956; }
 .btn.perigo { color: var(--sangue-claro); border-color: #5a2a25; background: transparent; }
 .btn.perigo:hover:not(:disabled) { background: var(--sangue); color: #fff; border-color: var(--sangue); }
@@ -186,9 +186,9 @@ body.ocupado { cursor: progress; }
 /* Cenário vazio: tábuas de madeira, brilho de lampião e o balcão embaixo */
 .sem-cenario {
     position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: .3rem;
-    color: #c9b48f; font: 600 .8rem var(--fonte-titulo); letter-spacing: .16em; text-transform: uppercase;
+    color: #b9c4cf; font: 600 .8rem var(--fonte-titulo); letter-spacing: .16em; text-transform: uppercase;
     background:
-        radial-gradient(ellipse 60% 55% at 50% 38%, rgba(224, 166, 58, .2), transparent 70%),
+        radial-gradient(ellipse 60% 55% at 50% 38%, rgba(169, 198, 227, .2), transparent 70%),
         linear-gradient(to top, #2c1e12 0 15%, #1a120b 15% 16.5%, transparent 16.5%),
         repeating-linear-gradient(90deg, #2a1f15 0 44px, #21180f 44px 46px),
         #1d150e;
@@ -201,7 +201,7 @@ body.ocupado { cursor: progress; }
 .detalhe-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1.25rem; align-items: start; }
 .palco {
     position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 8px; background: #000;
-    border: 3px solid #2a1d12;
+    border: 3px solid #22262b;
     box-shadow: 0 0 0 1px var(--lampiao-escuro), 0 14px 40px rgba(0, 0, 0, .6);
 }
 .palco > img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -234,7 +234,7 @@ body.ocupado { cursor: progress; }
 .bloco p { margin: 0; }
 .bloco .prompt {
     font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .8rem; line-height: 1.6;
-    color: #e2d6bd; background: #0b0907; border: 1px solid var(--borda); border-radius: var(--raio); padding: .75rem;
+    color: #e2d6bd; background: #0b0c0e; border: 1px solid var(--borda); border-radius: var(--raio); padding: .75rem;
 }
 
 /* ---------- formulário ---------- */
@@ -247,7 +247,7 @@ body.ocupado { cursor: progress; }
 .formulario .grupo label { min-width: 200px; }
 input, select, textarea {
     font: 400 .95rem var(--fonte); color: var(--texto);
-    background: #0b0907; border: 1px solid var(--borda); border-radius: var(--raio);
+    background: #0b0c0e; border: 1px solid var(--borda); border-radius: var(--raio);
     padding: .55rem .7rem; width: 100%;
 }
 textarea { resize: vertical; line-height: 1.5; }
@@ -266,7 +266,7 @@ details.opcional label + label { margin-top: 1rem; }
 .tabela { width: 100%; border-collapse: collapse; min-width: 640px; }
 .tabela th, .tabela td { padding: .65rem .8rem; text-align: left; border-bottom: 1px solid var(--borda); vertical-align: top; }
 .tabela th { font: 600 .72rem var(--fonte); text-transform: uppercase; letter-spacing: .08em; color: var(--texto-2); background: var(--painel); }
-.tabela tbody tr:hover { background: rgba(224, 166, 58, .05); }
+.tabela tbody tr:hover { background: rgba(169, 198, 227, .05); }
 .tabela tbody tr:last-child td { border-bottom: 0; }
 .tabela .num { text-align: right; font-variant-numeric: tabular-nums; width: 3rem; }
 .tabela .msg { font-size: .82rem; color: var(--texto-2); max-width: 460px; word-break: break-word; }
@@ -283,7 +283,7 @@ details.opcional label + label { margin-top: 1rem; }
 /* ---------- confirmação / erro ---------- */
 .confirmacao { display: flex; flex-direction: column; gap: 1rem; }
 .confirmacao figure { margin: 0; }
-.confirmacao img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; border: 2px solid #2a1d12; display: block; }
+.confirmacao img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 8px; border: 2px solid #22262b; display: block; }
 .confirmacao figcaption { margin-top: .35rem; }
 .erro-pagina { text-align: center; padding: 3rem 1rem; display: flex; flex-direction: column; align-items: center; gap: .5rem; }
 .erro-codigo { font: 600 4.5rem/1 var(--fonte-titulo); color: var(--sangue); text-shadow: 0 0 24px rgba(168, 50, 43, .45); }
@@ -316,3 +316,7 @@ details.opcional label + label { margin-top: 1rem; }
 .modal-corpo h2 { margin: 0; font-size: 1.1rem; color: var(--sangue-claro); }
 .modal-corpo p { margin: 0; line-height: 1.5; }
 .modal-corpo .acoes { justify-content: flex-end; }
+
+/* modelo desenhado da arma no cartão da tela Armas */
+.modelo-arma-cartao { background: radial-gradient(ellipse at center, rgba(169, 198, 227, .12), transparent 70%); border-radius: var(--raio); padding: .4rem; }
+.modelo-arma-cartao svg { width: 100%; max-height: 90px; display: block; }

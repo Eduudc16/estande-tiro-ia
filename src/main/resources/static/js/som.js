@@ -359,6 +359,52 @@ window.Som = (() => {
         };
     })();
 
+    // ------------------------------------------------------------ faixas em arquivo (opcionais)
+    // Se existirem em /audio (pasta audio-local, fora do Git), substituem a música sintetizada e
+    // acrescentam abertura, derrota e gritos dos inimigos. Sem os arquivos, nada muda.
+    const faixas = {}, disponivel = {};
+    const GRITOS = ['grito-1', 'grito-2', 'grito-3', 'grito-4', 'grito-5'];
+    ['abertura', 'menu', 'partida', 'derrota', 'grito-feminino'].concat(GRITOS).forEach(nome => {
+        const a = new Audio('/audio/' + nome + '.mp3');
+        a.preload = 'auto';
+        a.addEventListener('canplaythrough', () => { disponivel[nome] = true; }, { once: true });
+        a.addEventListener('error', () => { disponivel[nome] = false; });
+        faixas[nome] = a;
+    });
+    faixas.menu.loop = true;
+    faixas.partida.loop = true;
+    let faixaAtual = null;
+
+    function volumeDe(nome) {
+        const musical = nome === 'menu' || nome === 'partida' || nome === 'derrota';
+        return musical ? (musicaLigada ? 0.45 : 0) : (efeitosLigados ? 0.9 : 0);
+    }
+    function tocarFaixa(nome) {
+        const a = faixas[nome];
+        if (!a || disponivel[nome] === false) return false;
+        if (nome === 'menu' || nome === 'partida' || nome === 'derrota') {
+            pararFaixa();
+            faixaAtual = a;
+        }
+        a.volume = volumeDe(nome);
+        a.currentTime = 0;
+        const p = a.play();
+        if (p && p.catch) p.catch(() => { /* sem gesto do usuário ainda ou arquivo ausente */ });
+        return true;
+    }
+    function pararFaixa() {
+        if (faixaAtual) { faixaAtual.pause(); faixaAtual = null; }
+    }
+    function grito(feminino) {
+        if (!efeitosLigados) return;
+        const nome = feminino && disponivel['grito-feminino'] ? 'grito-feminino'
+            : GRITOS.filter(g => disponivel[g])[Math.floor(Math.random() * GRITOS.filter(g => disponivel[g]).length)];
+        if (!nome) return;
+        const a = faixas[nome].cloneNode();
+        a.volume = 0.8;
+        a.play().catch(() => {});
+    }
+
     // ------------------------------------------------------------ API usada pelo jogo
     const pronto = () => ctx !== null;
     return {
@@ -380,7 +426,28 @@ window.Som = (() => {
             recargaAgendada.forEach(fonte => { try { fonte.stop(); } catch (e) { /* já terminou */ } });
             recargaAgendada = [];
         },
-        musica,
+        musica: {
+            /** Música da partida: a faixa em arquivo, se houver; senão a valsa sintetizada. */
+            tocar() {
+                if (!musicaLigada) return;
+                if (disponivel.partida && tocarFaixa('partida')) return;
+                musica.tocar();
+            },
+            parar() { musica.parar(); if (faixaAtual === faixas.partida) pararFaixa(); },
+            acelerar(f) { musica.acelerar(f); if (faixas.partida) faixas.partida.playbackRate = f > 1 ? 1.08 : 1; }
+        },
+        /** Abertura (uma vez) e música do menu, antes de começar a partida. */
+        menu() {
+            if (disponivel.abertura && efeitosLigados) tocarFaixa('abertura');
+            if (musicaLigada) tocarFaixa('menu');
+        },
+        derrota() {
+            pararFaixa();
+            if (musicaLigada && disponivel.derrota) tocarFaixa('derrota');
+            else if (efeitosLigados && EFEITOS.derrota && ctx) EFEITOS.derrota();
+        },
+        grito,
+        pararFaixas: pararFaixa,
         pausar() {
             if (ctx && ctx.state === 'running') ctx.suspend();
         },
@@ -405,7 +472,8 @@ window.Som = (() => {
                 busMusica.gain.setTargetAtTime(musicaLigada ? 0.3 : 0, ctx.currentTime, 0.08);
                 envioMusica.gain.setTargetAtTime(musicaLigada ? 0.3 : 0, ctx.currentTime, 0.08);
             }
-            if (!musicaLigada) musica.parar();
+            if (!musicaLigada) { musica.parar(); pararFaixa(); }
+            if (faixaAtual) faixaAtual.volume = musicaLigada ? 0.45 : 0;
             return musicaLigada;
         }
     };

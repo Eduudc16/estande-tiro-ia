@@ -32,7 +32,7 @@
     // inimigos do banco: a imagem gerada pela IA quando existe; senão, o desenho SVG de reserva
     const INIMIGOS = cfg.inimigos && cfg.inimigos.length
         ? cfg.inimigos.map(i => i.imagem
-            ? { classe: i.classe, imagem: i.imagem, nome: i.nome }
+            ? { classe: i.classe, imagem: i.imagem, nome: i.nome, feminino: /^Aldeã|^Camponesa|ã com/.test(i.nome || '') }
             : Object.assign({}, DESENHOS[i.indice] || DESENHOS[0], { classe: i.classe }))
         : DESENHOS;
     // a refém: imagem gerada pela IA para este tipo, ou o desenho padrão
@@ -45,7 +45,7 @@
     const mundo = q('.jogo-mundo'), camada = q('.jogo-alvos'), efeitos = q('.jogo-efeitos');
     const mira = q('.jogo-mira');
     const hud = {
-        tempo: q('[data-hud-tempo]'), pontos: q('[data-hud-pontos]'), arma: q('[data-hud-arma]'),
+        tempo: q('[data-hud-tempo]'), pontos: q('[data-hud-pontos]'), arma: q('[data-hud-arma]'), modelo: q('[data-hud-modelo]'),
         municao: q('[data-hud-municao]'), recarga: q('[data-hud-recarga]'), aviso: q('[data-hud-aviso]'),
         zoom: q('[data-zoom]')
     };
@@ -92,7 +92,7 @@
         SUBMETRALHADORA: '<path d="M12 7h42v5H39v3h-6v-3h-7l-3 9h-7l2-9h-4z"/><rect x="30" y="14" width="5" height="9" rx="1"/>',
         LANCA_GRANADAS: '<path d="M4 7h54v9H4z"/><circle cx="24" cy="17" r="5"/><path d="M16 15h-6l-3 8h6z"/>'
     };
-    const icone = tipo => `<svg viewBox="0 0 64 24" aria-hidden="true">${ICONES[tipo] || ICONES.PISTOLA}</svg>`;
+    const icone = tipo => window.ModelosArmas ? ModelosArmas.svg(tipo) : `<svg viewBox="0 0 64 24" aria-hidden="true">${ICONES[tipo] || ICONES.PISTOLA}</svg>`;
     const stat = (nome, valor) =>
         `<span class="stat"><small>${nome}</small><i style="--v:${Math.round(Math.min(1, Math.max(0.06, valor)) * 100)}%"></i></span>`;
 
@@ -116,6 +116,7 @@
         const a = armaAtual();
         if (!a) return;
         hud.arma.textContent = a.nome;
+        if (hud.modelo) hud.modelo.innerHTML = icone(a.tipo);
         hud.municao.textContent = `${pente[armaIdx]} / ${a.capacidade}`;
         hud.municao.classList.toggle('vazio', pente[armaIdx] === 0);
         hud.zoom.hidden = a.tipo !== 'RIFLE';
@@ -422,6 +423,7 @@
         a.estado = 'caido';
         a.el.classList.add('caido');
         Som.efeito('queda');
+        Som.grito(!!(a.def.feminino || a.def.saia));
         st.abatidos++;
         const mult = cabeca ? (arma.tipo === 'RIFLE' ? 2 : 1.5) : 1;
         somarPontos(Math.round(a.pontos * mult), a, cabeca ? 'Na cabeça!' : '');
@@ -564,6 +566,7 @@
         acelerou = false;
         Som.iniciar();
         Som.efeito('inicio');
+        Som.pararFaixas();
         Som.musica.tocar();
         atualizarHudArma();
         mira.hidden = !ponteiro.dentro;
@@ -597,7 +600,7 @@
             q('[data-fim-refens]').textContent = st.refens;
             q('[data-fim-recorde]').textContent = novoRecorde ? `${st.pontos} (novo recorde!)` : String(recordeAntigo);
             telaFim.classList.toggle('derrota', perdeu);
-            Som.efeito(perdeu ? 'derrota' : 'fim');
+            if (perdeu) Som.derrota(); else { Som.efeito('fim'); setTimeout(() => { if (!rodando) Som.menu(); }, 1500); }
             telaFim.hidden = false;
         }, perdeu ? 900 : 300);
     }
@@ -688,6 +691,9 @@
         });
     }
     window.addEventListener('resize', atualizarMira);
+    const abrirMenu = () => { if (!rodando) Som.menu(); };
+    document.addEventListener('pointerdown', abrirMenu, { once: true, capture: true });
+    document.addEventListener('keydown', abrirMenu, { once: true, capture: true });
 
     montarBarra();
     atualizarBotoesSom();

@@ -187,7 +187,7 @@ arma define o comportamento, que está programado em `static/js/jogo.js`.
 - Nada usa imagens ou personagens de outros jogos.
 
 **Som e música:** tudo é sintetizado na hora com a Web Audio API, em
-[`static/js/som.js`](src/main/resources/static/js/som.js), sem arquivos de áudio.
+[`static/js/som.js`](src/main/resources/static/js/som.js).
 - **Tiro de cada arma:**
   - Pistola: estalo seco.
   - Revólver: estrondo grave com anel metálico.
@@ -202,6 +202,21 @@ arma define o comportamento, que está programado em `static/js/jogo.js`.
 - **Música:** uma **valsa sinistra de parque de diversões composta para este projeto** (lá menor, 3/4), que acelera
   nos últimos 10 segundos. Não é a música do jogo original.
 - Os botões **Efeitos** e **Música** da tela do jogo ligam e desligam cada parte separadamente.
+- **Faixas opcionais em arquivo:** se a pasta `audio-local/` (na raiz, **fora do Git**) tiver estes `.mp3`, o jogo os usa;
+  sem eles, fica tudo sintetizado:
+  - `abertura.mp3`: toca uma vez no primeiro clique/tecla na tela do jogo (o navegador exige um gesto).
+  - `menu.mp3`: música da tela inicial, antes e entre as partidas.
+  - `partida.mp3`: substitui a valsa durante a partida.
+  - `derrota.mp3`: toca ao perder (refém atingida).
+  - `grito-1.mp3` a `grito-5.mp3`: um deles, sorteado, quando um inimigo cai.
+  - `grito-feminino.mp3`: quando cai uma inimiga.
+  - Esses arquivos não são publicados porque os direitos não puderam ser confirmados.
+
+**Modelos das armas:** cada tipo tem um modelo desenhado em SVG original
+([`static/js/armas-modelos.js`](src/main/resources/static/js/armas-modelos.js)), mostrado na tela Armas, na barra de armas
+e no HUD da partida.
+
+**Visual:** paleta cinza grafite com detalhes em azul bem claro (variáveis em `:root` de `static/css/estilo.css`).
 
 ## Controle de custo (chave faturada)
 
@@ -343,7 +358,7 @@ estande-tiro-ia/
     │   │                                   armas/(lista, form), alvos/(lista, regenerar), logs/lista, error
     │   └── static/
     │       ├── css/estilo.css, css/jogo.css   visual, minigame e temas de cada tipo
-    │       └── js/app.js, js/alvos.js, js/jogo.js, js/som.js   telas, desenhos dos alvos,
+    │       └── js/app.js, js/alvos.js, js/armas-modelos.js, js/jogo.js, js/som.js   telas, desenhos dos alvos,
     │                                                          motor do minigame, sons e música
     └── test/java/...                       34 testes (IA simulada, sem gastar cota)
 ```

@@ -19,9 +19,13 @@ public class WebConfig implements WebMvcConfigurer {
     private final ArmazenamentoCenarios cenarios;
     private final ArmazenamentoAlvos alvos;
 
-    public WebConfig(ArmazenamentoCenarios cenarios, ArmazenamentoAlvos alvos) {
+    private final String audioLocal;
+
+    public WebConfig(ArmazenamentoCenarios cenarios, ArmazenamentoAlvos alvos,
+                     @org.springframework.beans.factory.annotation.Value("${app.audio.pasta:./audio-local}") String audioLocal) {
         this.cenarios = cenarios;
         this.alvos = alvos;
+        this.audioLocal = audioLocal;
     }
 
     @Override
@@ -32,6 +36,9 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler(ArmazenamentoAlvos.URL_BASE + "**")
                 .addResourceLocations(local(alvos.getPasta()))
                 .setCacheControl(CacheControl.noCache());
+        // audios locais do jogador (pasta audio-local, fora do Git); sem eles o jogo usa os sons sintetizados
+        registry.addResourceHandler("/audio/**")
+                .addResourceLocations(local(Path.of(audioLocal).toAbsolutePath().normalize()));
     }
 
     private static String local(Path pasta) {
